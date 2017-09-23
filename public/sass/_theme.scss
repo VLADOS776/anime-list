@@ -1,0 +1,102 @@
+$fontColor: #d6d6d6;
+$fontColor2: darken($fontColor, 10);
+$fontColor3: darken($fontColor, 20);
+
+$primaryColor: #FCE397;
+
+$dark: #282C2F;
+$dark2: lighten($dark, 10);
+$dark3: lighten($dark, 20);
+$bgTransparent: rgba(0, 0, 0, 0.2);
+
+body {
+    background-image: radial-gradient(at top, rgba(255, 255, 255, 0.15), transparent 45%), url('../img/bg.png');
+    font-family: 'Futura';
+    color: $fontColor;
+    background-repeat: no-repeat, repeat;
+}
+.text-primary {
+    color: $primaryColor!important;
+}
+.btn-outline-warning {
+    color: $primaryColor;
+    border-color: $primaryColor;
+    &:hover {
+        background-color: darken($primaryColor, 20);
+    }
+    &.disabled {
+        color: $primaryColor;
+        &:hover {
+            color: #fff;
+        }
+    }
+}
+hr {
+    height: 1.5rem;
+    background-image: repeating-linear-gradient(-45deg, rgba(39, 39, 39, 0.45), rgba(39, 39, 39, 0.45) 2px, transparent 2px, transparent 6px);
+    border-top: none;
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar-thumb {
+    background: darken($dark, 5);
+    -webkit-border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px $dark;
+    background: $dark2;
+    /* margin: 10px 0; */
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity .5s
+}
+.fade-enter, .fade-leave-to {
+    opacity: 0
+}
+
+.slide-enter-active, .slide-leave-active {
+    transition: all .5s
+}
+.slide-enter, .slide-leave-to /* .fade-leave-active до версии 2.1.8 */ {
+    opacity: 0;
+    position: relative;
+}
+.slide-enter {
+    transform: translate(0, 10%);
+}
+.slide-leave-to {
+    transform: translate(0, -10%);
+}
+
+/* === Loading Spinner === */
+
+.load-spinner {
+    $size: 60px;
+    margin: auto;
+    width: $size;
+    height: $size;
+    border-width: 5px;
+    border-style: solid;
+    border-color: $primaryColor $dark $dark;
+    border-image: initial;
+    box-sizing: border-box;
+    border-radius: 100%;
+    animation: circle-spin 1s infinite linear;
+    &.center {
+        position: absolute;
+        top: calc(50% - #{$size});
+        left: calc(50% - #{$size});
+    }
+}
+@keyframes circle-spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,48 @@
+.start {
+    .watching {
+        flex-wrap: nowrap;
+        overflow: hidden;
+        overflow-x: scroll;
+        .card {
+            flex: 1 0 150px;
+            img {
+                height: 100%;
+            }
+            .card-body {
+                display: none;
+                top: 0;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 1rem;
+                transition: all 0.4s linear;
+            }
+            &:hover .card-body {
+                display: block;
+            }
+        }
+    }
+    
+    $cardsColumns: 5;
+    .card-columns {
+        -webkit-column-count: $cardsColumns;
+        column-count: $cardsColumns;
+    }
+    .card {
+        cursor: pointer;
+        .card-img-overlay {
+            top: inherit;
+            padding: 0.5rem;
+            padding-bottom: 0.2rem;
+            background: linear-gradient(transparent, #000);
+            padding-top: 2.5rem;
+        }
+        img {
+            max-width: 300px;
+        }
+        h4.card-title {
+            font-size: 1rem;
+        }
+        h6.card-subtitle {
+            font-size: 0.7rem;
+        }
+    }
+}

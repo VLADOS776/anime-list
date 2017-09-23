@@ -1,0 +1,101 @@
+.watch {
+    .player-contaier {
+        max-height: 625px;
+        position: relative;
+        overflow: visible;
+        &:after {
+            content: '';
+            position: absolute;
+            z-index: -2;
+            box-shadow: 0 26px 15px rgba(0, 0, 0, 0.35);
+            bottom: 0;
+            left: 10px;
+            right: 10px;
+            border-radius: 100%;
+            height: 20px;
+        }
+    }
+    .video-variants {
+        padding: 0;
+        .card {
+            background-color: $bgTransparent;;
+            
+            .nav-tabs {
+                justify-content: space-between;
+                .nav-item a {
+                    color: #fff;
+                    &.active, &:hover {
+                        background-color: rgba(0, 0, 0, 0.3);
+                        color: $primaryColor;
+                        border-color: transparent;
+                        border-bottom: 2px solid $primaryColor;
+                    }
+                    &:hover {
+                        color: darken(#fff, 30);
+                    }
+                }
+            }
+            
+            .video-players {
+                list-style: none;
+                line-height: 1.4rem;
+                padding: 0;
+                margin: 0;
+                max-height: 312px;
+                overflow-y: auto;
+                
+                @media (max-width: 1200px) {
+                    max-height: 243px;
+                }
+
+                li {
+                    padding: 2px;
+                    padding-left: 10px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    &.active {
+                        background-color: $primaryColor;
+                        color: $dark;
+                    }
+                    &:hover {
+                        background-color: lighten($primaryColor, 10);
+                        color: $dark;
+                    }
+                    .hosting {
+                        font-size: 0.7rem;
+                        color: #828282;
+                        white-space: nowrap;
+                        text-align: right;
+                    }
+                    &.eng:after {
+                        content: 'English';
+                        margin-right: 5px;
+                        font-size: 0.7rem;
+                        float: right;
+                        vertical-align: middle;
+                        color: #97cdfc;
+                    }
+                }
+                
+                &::-webkit-scrollbar-thumb {
+                    background: $primaryColor;
+                    -webkit-border-radius: 10px;
+                }
+
+                &::-webkit-scrollbar-track {
+                    -webkit-box-shadow: inset 0 0 6px #a7a7a7;
+                    -webkit-border-radius: 10px;
+                    /* margin: 10px 0; */
+                }
+
+                &::-webkit-scrollbar {
+                    width: 5px;
+                }
+
+            }
+        }
+    }
+    #select-ep {
+        margin-top: 1rem;
+    }
+}
