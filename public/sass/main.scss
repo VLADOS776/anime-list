@@ -1,11 +1,15 @@
 button.btn i {
     margin-right: 5px;
 }
+.cursor-pointer {
+    cursor: pointer;
+}
 
 @import "_fonts";
 @import "_theme";
 @import "_start";
-@import "_anime";
+@import "_info";
 @import "_top-bar";
 @import "_media";
 @import "_watch";
+@import "_read";

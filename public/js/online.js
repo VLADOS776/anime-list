@@ -1,5 +1,6 @@
 const request = require('request'),
-      cheerio = require('cheerio');
+      cheerio = require('cheerio'),
+      log = require('./log');
 
 let videoDOM = null,
     domain = null;
@@ -14,10 +15,11 @@ module.exports.getPlayers = function(animeId, ep, videoId, callback) {
         
     function load(url, callback) {
         request({ url: url }, function(err, response, body) {
-            if (err) console.error(err);
+            if (err) log.error(err);
             let $ = cheerio.load(body);
 
             if ($('.error-404').length) {
+                log.error('Online. Error 404.', { animeId: animeId, episode: ep, videoID: videoId })
                 return load('https:' + $('p a').attr('href'), callback);
             }
 
@@ -51,8 +53,6 @@ module.exports.getPlayers = function(animeId, ep, videoId, callback) {
                 sub: sub,
                 raw: raw
             })
-
-            console.log('Loaded!');
         })
     }
 }
@@ -60,12 +60,11 @@ module.exports.getPlayers = function(animeId, ep, videoId, callback) {
 module.exports.getVideo = function() {
     let url = document.getElementById('player').getAttribute('src');
     domain = /:\/\/(.*?)\//.exec(url);
-    console.log('Iframe url: ', url);
 
     if (domain.length === 2) {
         domain = domain[1];
     } else {
-        console.error('Wrong domain', domain, url);
+        log.error('Wrong domain', { domain: domain, url: url });
         return null;
     }
 
@@ -90,7 +89,7 @@ module.exports.getVideoAsync = function(timer=1000, callback) {
 
 module.exports.getTime = function() {
     if (!videoDOM) {
-        console.error('Сначала надо вызвать getVideo()')
+        log.error('Сначала надо вызвать getVideo()')
         return null
     }
     

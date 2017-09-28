@@ -11,28 +11,21 @@ if (!fs.existsSync(dbDirPath)) {
 let db = {};
 
 db.anime = new Datastore({ filename: path.join(dbDirPath, 'anime.db'), timestampData: true });
+db.manga = new Datastore({ filename: path.join(dbDirPath, 'manga.db'), timestampData: true });
 db.anime.loadDatabase();
+db.manga.loadDatabase();
 
-module.exports.anime = {};
-module.exports.anime.get = function(query={}, sort={russian: 1}, callback) {
-    db.anime.find(query).sort(sort).exec(function(err, docs) {
+function get(dbName, query, sort, callback) {
+     db[dbName].find(query).sort(sort).exec(function(err, docs) {
         if (err) console.error(err);
         
         if (typeof callback === 'function') callback(docs);
     })
 }
-module.exports.anime.getAll = function(callback) {
-    db.anime.find({}).sort({ russian: 1}).exec(function(err, docs) {
-        if (err) console.error(err);
-        
-        if (typeof callback === 'function') callback(docs);
-    })
-}
-
-module.exports.anime.add = function(anime, callback) {
-    db.anime.findOne({ id: anime.id }, function(err, doc) {
+function add(dbName, item, callback) {
+     db[dbName].findOne({ id: item.id }, function(err, doc) {
         if (!doc) {
-            db.anime.insert(anime, function(err, newDoc) {
+            db[dbName].insert(item, function(err, newDoc) {
                 if (err) console.err(err);
 
                 if (typeof callback === 'function') callback(newDoc);
@@ -42,9 +35,8 @@ module.exports.anime.add = function(anime, callback) {
         }
     })
 }
-
-module.exports.anime.remove = function(animeId, callback) {
-    db.anime.remove({ id: animeId }, {}, function(err, doc) {
+function remove(dbName, itemId, callback) {
+    db[dbName].remove({ id: itemId }, {}, function(err, doc) {
         if (typeof callback === 'function') {
             if (doc) {
                 callback(true);
@@ -55,21 +47,70 @@ module.exports.anime.remove = function(animeId, callback) {
         }
     })
 }
+function update(dbName, item, callback) {
+    db[dbName].update({id: item.id}, item, {}, function(err, newDoc) {
+        if (err) console.err(err);
 
+        if (typeof callback === 'function') callback(newDoc);
+    })
+}
+
+// ====== Anime ======
+
+module.exports.anime = {};
+module.exports.anime.get = function(query={}, sort={russian: 1}, callback) {
+    get('anime', query, sort, callback);
+}
+module.exports.anime.getAll = function(callback) {
+    get('anime', {}, { russian: 1 }, callback);
+}
+module.exports.anime.add = function(anime, callback) {
+    add('anime', anime, callback);
+}
+module.exports.anime.remove = function(animeId, callback) {
+    remove('anime', animeId, callback);
+}
 module.exports.anime.update = function(anime, callback) {
-    db.anime.update({id: anime.id}, anime, {}, function(err, newDoc) {
-        if (err) console.err(err);
-
-        if (typeof callback === 'function') callback(newDoc);
-    })
+    update('anime', anime, callback);
 }
-
 module.exports.anime.watchEp = function(animeId, ep, callback) {
-    db.anime.update({id: animeId}, { $set: { 'watched': ep } }, {}, function(err, newDoc) {
+    db.anime.update({id: animeId}, { $set: { 'watched': ep, 'lastWatched': Date.now() } }, {}, function(err, newDoc) {
         if (err) console.err(err);
 
         if (typeof callback === 'function') callback(newDoc);
     })
 }
+module.exports.anime.DB = db.anime;
 
-module.exports.anime.DB = db.anime
+// ====== Manga ======
+
+module.exports.manga = {};
+module.exports.manga.get = function(query={}, sort={russian: 1}, callback) {
+    get('manga', query, sort, callback);
+}
+module.exports.manga.getAll = function(callback) {
+    get('manga', {}, { russian: 1 }, callback);
+}
+module.exports.manga.add = function(manga, callback) {
+    add('manga', manga, callback);
+}
+module.exports.manga.remove = function(mangaId, callback) {
+    remove('manga', mangaId, callback);
+}
+module.exports.manga.update = function(manga, callback) {
+    update('manga', manga, callback);
+}
+module.exports.manga.readChapter = function(mangaId, readed, callback) {
+    db.manga.update({id: mangaId}, { $set: { 'readed': readed, 'lastReaded': Date.now() } }, {}, function(err, newDoc) {
+        if (err) console.err(err);
+
+        if (typeof callback === 'function') callback(newDoc);
+    })
+}
+module.exports.manga.bookmark = function(mangaId, bookmark, callback) {
+    db.manga.update({id: mangaId}, { $set: { 'bookmark': bookmark, 'lastReaded': Date.now() } }, {}, function(err, newDoc) {
+        if (err) console.err(err);
+
+        if (typeof callback === 'function') callback(newDoc);
+    })
+}

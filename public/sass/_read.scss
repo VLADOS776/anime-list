@@ -1,0 +1,15 @@
+.read {
+    .imgWrap img {
+        max-width: 100%;
+        margin: 0 auto;
+        display: block;
+    }
+    .select-wrap {
+        min-width: 210px;
+        text-align: center;
+        .select-page {
+            max-width: 70px;
+            display: inline-block;
+        }
+    }
+}

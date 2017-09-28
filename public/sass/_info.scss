@@ -1,4 +1,4 @@
-.anime {
+.anime, .manga {
     .info {
         .left-side {
             position: relative;
@@ -20,7 +20,7 @@
                     max-height: 100px;
                 }
             }
-            h6 {
+            h6 { 
                 margin-top: -6px;
             }
             .genre {
@@ -49,7 +49,7 @@
             }
         }
         
-        & > .anime {
+        & > .anime, .manga {
             .img-wrap, h6 { cursor: pointer; }
         }
     }
