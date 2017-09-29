@@ -53,6 +53,8 @@ app.on('ready', function () {
     // Создаем окно браузера.
     mainWindow = new BrowserWindow(winConfig);
     
+    mainWindow.setMenu(null);
+    
     if (winConfig.maximized) {
         mainWindow.maximize()
     }

@@ -114,3 +114,4 @@ module.exports.manga.bookmark = function(mangaId, bookmark, callback) {
         if (typeof callback === 'function') callback(newDoc);
     })
 }
+module.exports.manga.DB = db.manga;

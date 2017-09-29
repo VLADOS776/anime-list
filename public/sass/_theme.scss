@@ -94,6 +94,12 @@ hr {
         top: calc(50% - #{$size});
         left: calc(50% - #{$size});
     }
+    &.small {
+        $size_small: 30px;
+        width: $size_small;
+        height: $size_small;
+        border-width: 2px;
+    }
 }
 @keyframes circle-spin {
     100% {

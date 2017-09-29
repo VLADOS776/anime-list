@@ -14,23 +14,31 @@
             color: #fff
         }
     }
-    ul#searchResult {
+    #searchResult {
         z-index: 3;
         position: absolute;
         background: $dark;
         padding: 3px 10px;
-        list-style: none;
         right: 1rem;
         border: 3px solid $dark2;
         outline: 1px solid $dark3;
         top: 3.5rem;
         min-width: 230px;
+        ul {
+            flex-grow: 1;
+            padding: 0 10px;
+            list-style: none;
+        }
         .header {
             font-weight: bold;
             border-bottom: 1px solid $dark2;
             margin-top: 7px;
             margin-bottom: 2px;
             color: $fontColor2;
+            display: block;
+            &-2 {
+                text-align: center;
+            }
         }
         .header:first-child {
             margin-top: 0;

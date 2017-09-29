@@ -125,55 +125,74 @@ Vue.component('relate', {
 })
 Vue.component('top-bar', {
     template: '#topBar-tmp',
+    mixins: [Mixins.selectItem],
     props: ['allanime'],
     data: function() {
         return {
             search: '',
-            onlineSearchLoading: true,
-            searchOnline: [],
+            oLoading_anime: true,
+            oLoading_manga: true,
+            searchOnline_anime: [],
+            searchOnline_manga: [],
             onlineSearchTimeout: null,
             appVersion: remote.app.getVersion()
         }
     },
     computed: {
-        searchLocal: function() {
+        searchLocal_anime: function() {
             if (this.search.length === 0) return []
             
-            let filtered = this.allanime.filter(a => a.name.toLowerCase().includes(this.search.toLowerCase()) || a.russian.toLowerCase().includes(this.search.toLowerCase()))
+            let filtered = this.allanime.filter(a => a.name.toLowerCase().includes(this.search.toLowerCase()) ||
+                                                a.russian.toLowerCase().includes(this.search.toLowerCase()))
                             .slice(0, 10);
             
             return filtered
+        },
+        searchLocal_manga: function() {
+            if (this.search.length === 0) return []
+            
+            let filtered = this.all_manga.filter(a => a.name.toLowerCase().includes(this.search.toLowerCase()) ||
+                                                 a.russian.toLowerCase().includes(this.search.toLowerCase()))
+                            .slice(0, 10);
+            return filtered
+        },
+        all_manga: function() {
+            return this.$root.allManga
         }
     },
     methods: {
-        selectSearch: function(item) {
-            this.search = '';
-            this.$emit('anime', item)
-        },
         onlineSearch: function() {
             if (this.onlineSearchTimeout) clearTimeout(this.onlineSearchTimeout);
             
-            this.onlineSearchLoading = true;
+            this.oLoading_anime = true;
+            this.oLoading_manga = true;
             let self = this;
             
             // Ждем, пока пользователь наберет весь запрос
             this.onlineSearchTimeout = setTimeout(function() {
                 request({ url: "https://shikimori.org/api/animes", qs: { search: self.search, limit: 10 }}, function(err, response, body) {
-                    self.onlineSearchLoading = false;
+                    self.oLoading_anime = false;
                     if (err) log.error(err);
                     
                     try {
                         let list = JSON.parse(body);
-                        self.searchOnline = list;
+                        self.searchOnline_anime = list;
+                    } catch (e) {
+                        log.error(e)
+                    }
+                })
+                request({ url: "https://shikimori.org/api/mangas", qs: { search: self.search, limit: 10 }}, function(err, response, body) {
+                    self.oLoading_manga = false;
+                    if (err) log.error(err);
+                    
+                    try {
+                        let list = JSON.parse(body);
+                        self.searchOnline_manga = list;
                     } catch (e) {
                         log.error(e)
                     }
                 })
             }, 1000)
-        },
-        selectOnline: function(id) {
-            let self = this;
-            self.$emit('anime', id)
         },
         start_page: function() {
             this.$emit('change_page', 'start')
@@ -399,9 +418,10 @@ Vue.component('watch', {
             } else {
                 if (!this.anime.watched || this.watch.ep > this.anime.watched) {
                     db.anime.watchEp(this.anime.id, this.watch.ep);
-                    
-                    this.$root.$emit('update-all-anime');
+                } else if (this.watch.ep < this.anime.watched) {
+                    db.anime.watchEp(this.anime.id, this.watch.ep - 1);
                 }
+                this.$root.$emit('update-all-anime');
             }
         },
         change_videoId: function(videoId) {
@@ -494,6 +514,7 @@ Vue.component('manga', {
             })
         },
         showExternalLinks: function() {
+            
             mangaInfo.externalLinks(this.manga.id, (error, links) => {
                 if (links) {
                     let knownNames = {
@@ -564,6 +585,11 @@ Vue.component('read', {
             }
             
             this.$scrollTo('.imgWrap', 500, {offset: -58});
+        },
+        chapterUrl: function(newVal, oldVal) {
+            if (oldVal == null) return;
+            
+            this.loadChapter(newVal);
         }
     },
     computed: {
@@ -582,7 +608,7 @@ Vue.component('read', {
         back: function() {
             this.$emit('change_page', 'manga')
         },
-        bookmark: function() {
+        bookmark: function(event) {
             let bookmark = {
                 volume: this.watch.volume,
                 chapter: this.watch.chapter,
@@ -593,11 +619,20 @@ Vue.component('read', {
             if (!this.manga.inDB) {
                 db.manga.add(JSON.parse(JSON.stringify(this.manga)), () => {
                     db.manga.bookmark(this.manga.id, bookmark);
-                    this.$root.$emit('update-all-manga');
-                })
+                    
+                    this.$set(this.manga, 'bookmark', bookmark)
+                })           
             } else {
-                db.manga.bookmark(this.manga.id, bookmark);
-                this.$root.$emit('update-all-manga');
+                if (this.bookmarkClass['btn-info']) {
+                    // Если закладка уже стоит - удалить её.
+                    db.manga.DB.update({ id: this.manga.id }, { $unset: { bookmark: true } }, {}, () => {
+                        this.$set(this.manga, 'bookmark', null)
+                    })
+                    
+                } else {
+                    db.manga.bookmark(this.manga.id, bookmark);
+                    this.$set(this.manga, 'bookmark', bookmark)
+                }
             }
             
         },
@@ -635,6 +670,7 @@ Vue.component('read', {
             }
         },
         loadChapter: function(url) {
+            this.loading = true;
             onlineManga.getChapter(url, (error, chapter) => {
                 this.loading = false;
                 if (error != null) {
@@ -651,9 +687,25 @@ Vue.component('read', {
                     
                     this.watch.volume = chapter.volume;
                     this.watch.chapter = chapter.chapter;
-                    this.chapterUrl = url;
+                    this.$set(this, 'chapterUrl', url);
                 }
             })
+        },
+        updateVol_n_Chap: function(manga) {
+            let changed = false;
+            if (!this.manga.volumes || this.manga.volumes < manga.volumes) {
+                this.manga.volumes = manga.volumes;
+                changed = true;
+            }
+            if (!this.manga.chapters || this.manga.chapters < manga.chapters) {
+                this.manga.chapters = manga.chapters;
+                changed = true;
+            }
+
+            // Обновляем в БД
+            if (this.manga.inDB && changed) {
+                db.manga.DB.update({ id: this.manga.id }, { $set: { volumes: this.manga.volumes, chapters: this.manga.chapters }})
+            }
         }
     },
     created: function() {
@@ -661,14 +713,35 @@ Vue.component('read', {
         if (this.manga.bookmark) {
             this.loadChapter(this.manga.bookmark.chapterUrl);
             this.watch.bookmarkPage = this.manga.bookmark.page;
+            
+            onlineManga.getInfo(this.manga.bookmark.chapterUrl, (err, manga) => {
+                if (manga) {
+                    this.$set(this.manga, 'chapterList', manga.chaptersLinks);
+                    this.updateVol_n_Chap(manga);
+                }
+            })
         } else {
             mangaInfo.externalLinks(this.manga.id, (err, links) => {
                 if (links && links.length) {
                     let readmanga = links.find(link => link.kind === 'readmanga')
 
                     if (readmanga) {
-                        let url = `${readmanga.url}/vol${this.watch.volume}/${this.watch.chapter}?mtr=1`
-                        this.loadChapter(url);
+                        onlineManga.getInfo(readmanga.url, (err, manga) => {
+                            this.loading = false;
+                            
+                            if (manga && manga.startReadLink) {
+                                this.loadChapter(manga.startReadLink);
+                            } else {
+                                this.error = 'Манга была удалена'
+                            }
+                            if (manga && manga.chapterLinks && manga.chapterLinks.length) {
+                                this.$set(this.manga, 'chapterList', manga.chapterLinks);
+                            }
+                            
+                            // Заодно, если на shikimori не указано кол-во томов и глав 
+                            // или указано меньше, чем их есть - исправляем это
+                            this.updateVol_n_Chap(manga);
+                        })
                     } else {
                         this.loading = false;
                         this.error = 'Не удалось найти ссылку на чтение манги'
@@ -765,8 +838,8 @@ var app = new Vue({
             this.currentPage="watch";
         },
         read: function(manga) {
-            this.watch.volume = this.selected.readed ? this.selected.readed.volume : 1;
-            this.watch.chapter = this.selected.readed ? this.selected.readed.chapter + 1 : 1;
+            this.watch.volume = this.selected.readed && this.selected.readed.volume > 0 ? this.selected.readed.volume : 1;
+            this.watch.chapter = this.selected.readed && this.selected.readed.chapter > 0 ? this.selected.readed.chapter + 1 : 1;
             
             this.currentPage="read";
         },

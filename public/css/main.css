@@ -82,6 +82,10 @@ hr {
     position: absolute;
     top: calc(50% - 60px);
     left: calc(50% - 60px); }
+  .load-spinner.small {
+    width: 30px;
+    height: 30px;
+    border-width: 2px; }
 
 @keyframes circle-spin {
   100% {
@@ -173,26 +177,32 @@ hr {
       color: #616161; }
   .navbar .navbar-nav .nav-item a {
     color: #fff; }
-  .navbar ul#searchResult {
+  .navbar #searchResult {
     z-index: 3;
     position: absolute;
     background: #282C2F;
     padding: 3px 10px;
-    list-style: none;
     right: 1rem;
     border: 3px solid #3f464b;
     outline: 1px solid #576066;
     top: 3.5rem;
     min-width: 230px; }
-    .navbar ul#searchResult .header {
+    .navbar #searchResult ul {
+      flex-grow: 1;
+      padding: 0 10px;
+      list-style: none; }
+    .navbar #searchResult .header {
       font-weight: bold;
       border-bottom: 1px solid #3f464b;
       margin-top: 7px;
       margin-bottom: 2px;
-      color: #bdbdbd; }
-    .navbar ul#searchResult .header:first-child {
+      color: #bdbdbd;
+      display: block; }
+      .navbar #searchResult .header-2 {
+        text-align: center; }
+    .navbar #searchResult .header:first-child {
       margin-top: 0; }
-    .navbar ul#searchResult .item {
+    .navbar #searchResult .item {
       cursor: pointer;
       transition: 0.2s;
       padding: 2px 4px;
@@ -202,9 +212,9 @@ hr {
       text-overflow: ellipsis;
       border-radius: 2px;
       color: #d6d6d6; }
-      .navbar ul#searchResult .item:hover {
+      .navbar #searchResult .item:hover {
         background: #3f464b; }
-      .navbar ul#searchResult .item span {
+      .navbar #searchResult .item span {
         font-size: .8rem;
         margin-top: -5px;
         display: block; }
@@ -333,6 +343,8 @@ body.overflow {
   max-width: 100%;
   margin: 0 auto;
   display: block; }
+.read .select-chapter--wrap {
+  padding: 0 10px; }
 .read .select-wrap {
   min-width: 210px;
   text-align: center; }

@@ -4,10 +4,13 @@
 const RM = require('./sources/readmanga.me');
 
 module.exports = {
-    getChapter: function(url, callback) {
-        RM.getChapter(url, callback)
-    },
     getInfo: function(url, callback) {
         RM.mangaInfo(url, callback);
-    }
+    },
+    getChapters: function(url, callback) {
+        RM.getChapters(url, callback);
+    },
+    getChapter: function(url, callback) {
+        RM.getChapter(url, callback);
+    },
 }
