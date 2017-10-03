@@ -16,6 +16,9 @@
                 background: rgba(0, 0, 0, 0.7);
                 padding: 1rem;
                 transition: all 0.4s linear;
+                .card-text {
+                    font-size: 1rem;
+                }
             }
             &:hover .card-body {
                 display: block;
@@ -34,6 +37,7 @@
     }
     .card {
         cursor: pointer;
+        color: #fff;
         .card-img-overlay {
             top: inherit;
             padding: 0.5rem;

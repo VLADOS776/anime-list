@@ -1,20 +1,32 @@
 var $ = jQuery = require('./js/libs/jquery-3.2.1.min.js'),
     bootstrap = require('./js/libs/bootstrap.min.js');
 
-var request = require('request'),
-    remote = require('electron').remote;
+var remote = require('electron').remote;
 
 var Vue = require('./js/libs/vue.js'),
     db = require('./js/db.js'),
     online = require('./js/online'),
+    shikimori = require('./js/shikimoriInfo'),
     animeInfo = require('./js/shikimoriInfo').anime,
     mangaInfo = require('./js/shikimoriInfo').manga;
 
 var onlineManga = require('./js/onlineManga.js');
 
-const log = require('./js/log');
+const log = require('./js/log'),
+      config = require('./js/config');
+
+const ServerClass = require('./server'),
+      server = new ServerClass();
 
 //var anime = require('animejs');
+
+var DEV = true;
+
+server.on('update-anime', function(data) {
+    let anime = app.allAnime.find((anime) => anime.id === data.anime);
+    
+    anime[data.field] = data.value;
+})
 
 /* === TODO LIST ===
 ** TODO: Логин на shikimori и импорт списков.
@@ -58,7 +70,7 @@ var Mixins = {
 
 Vue.use(require('./js/libs/bootstrap-vue.js'));
 Vue.use(require('vue-scrollto'));
-Vue.use(require('vue-shortkey'));
+Vue.use(require('./js/libs/vue-shortkey.js'));
 
 Vue.component('start', {
     template: '#start-tmp',
@@ -170,27 +182,17 @@ Vue.component('top-bar', {
             
             // Ждем, пока пользователь наберет весь запрос
             this.onlineSearchTimeout = setTimeout(function() {
-                request({ url: "https://shikimori.org/api/animes", qs: { search: self.search, limit: 10 }}, function(err, response, body) {
+                shikimori.client.get('animes', { search: self.search, limit: 10 }, function(err, response, body) {
                     self.oLoading_anime = false;
                     if (err) log.error(err);
-                    
-                    try {
-                        let list = JSON.parse(body);
-                        self.searchOnline_anime = list;
-                    } catch (e) {
-                        log.error(e)
-                    }
+ 
+                    self.searchOnline_anime = response;
                 })
-                request({ url: "https://shikimori.org/api/mangas", qs: { search: self.search, limit: 10 }}, function(err, response, body) {
+                shikimori.client.get('mangas', { search: self.search, limit: 10 }, function(err, response, body) {
                     self.oLoading_manga = false;
                     if (err) log.error(err);
                     
-                    try {
-                        let list = JSON.parse(body);
-                        self.searchOnline_manga = list;
-                    } catch (e) {
-                        log.error(e)
-                    }
+                    self.searchOnline_manga = response;
                 })
             }, 1000)
         },
@@ -716,7 +718,7 @@ Vue.component('read', {
             
             onlineManga.getInfo(this.manga.bookmark.chapterUrl, (err, manga) => {
                 if (manga) {
-                    this.$set(this.manga, 'chapterList', manga.chaptersLinks);
+                    this.$set(this.manga, 'chapterList', manga.chapterLinks);
                     this.updateVol_n_Chap(manga);
                 }
             })
@@ -754,6 +756,28 @@ Vue.component('read', {
     }
 })
 
+Vue.component('settings', {
+    template: '#settings-tmp',
+    data: function() {
+        return {
+            server: server
+        }
+    },
+    computed: {
+        serverStatus: function() {
+            return this.server.active ? 'Включен' : 'Выключен'
+        }
+    },
+    methods: {
+        toggleServer: function() {
+            if (!this.server.active) {
+                this.server.start()
+            } else {
+                this.server.stop();
+            }
+        }
+    }
+})
 Vue.component('about', {
     mixins: [Mixins.browser],
     template: '#about-tmp'
@@ -789,10 +813,10 @@ var app = new Vue({
             this.$scrollTo('#app')
             if (typeof anime === 'number') {
                 log.info('Show anime: %s', anime);
-                
+
                 if (this.isInDB(anime)) {
                     this.selected = this.allAnime.find(el => el.id === anime);
-                    
+
                     this.currentPage = 'anime'
                 } else {
                     animeInfo.info(anime, (error, anime) => {
@@ -800,10 +824,10 @@ var app = new Vue({
                         this.currentPage = 'anime'
                     })
                 }
-                
+
             } else {
                 log.info('Show anime: %s', anime.id);
-                
+
                 this.selected = anime;
                 this.currentPage = 'anime'
             }
@@ -812,10 +836,10 @@ var app = new Vue({
             this.$scrollTo('#app')
             if (typeof manga === 'number') {
                 log.info('Show manga: %s', manga);
-                
+
                  if (this.isInDB(manga, 'allManga')) {
                     this.selected = this.allManga.find(el => el.id === manga);
-                    
+
                     this.currentPage = 'manga'
                 } else {
                     mangaInfo.info(manga, (error, manga) => {
@@ -825,7 +849,7 @@ var app = new Vue({
                 }
             } else {
                 log.info('Show manga: %s', manga.id);
-                
+
                 this.selected = manga;
                 this.currentPage = 'manga'
             }
@@ -834,22 +858,22 @@ var app = new Vue({
             this.watch.ep = this.selected.watched ? this.selected.watched + 1 : 1;
             if (this.watch.ep > this.selected.availableEp) this.watch.ep = this.selected.availableEp;
             this.watch.videoId = null;
-            
+
             this.currentPage="watch";
         },
         read: function(manga) {
             this.watch.volume = this.selected.readed && this.selected.readed.volume > 0 ? this.selected.readed.volume : 1;
             this.watch.chapter = this.selected.readed && this.selected.readed.chapter > 0 ? this.selected.readed.chapter + 1 : 1;
-            
+
             this.currentPage="read";
         },
         updateAllAnime: function() {
             db.anime.getAll(anime => {
                 this.allAnime = anime;
-                
+
                 if (this.selected) {
                     let foundSelected = this.allAnime.filter(anime => anime.id === this.selected.id);
-                    
+
                     if (foundSelected.length && foundSelected[0].kind === this.selected.kind) {
                         this.selected = foundSelected[0];
                     }
@@ -859,10 +883,10 @@ var app = new Vue({
         updateAllManga: function() {
             db.manga.getAll(manga => {
                 this.allManga = manga;
-                
+
                 if (this.selected) {
                     let foundSelected = this.allManga.filter(anime => anime.id === this.selected.id);
-                    
+
                     if (foundSelected.length) {
                         this.selected = foundSelected[0];
                     }
@@ -876,13 +900,13 @@ var app = new Vue({
                 log.info('Update all. Wrong kind - ' + dbName);
                 return;
             }
-            
+
             db[dbName].getAll(items => {
                 this[into] = items;
-                
+
                 if (this.selected) {
                     let foundSelected = this[into].filter(item => item.id === this.selected.id);
-                    
+
                     if (foundSelected.length && foundSelected[0].kind === this.selected.kind) {
                         this.selected = foundSelected[0];
                     }
@@ -910,7 +934,7 @@ var app = new Vue({
                                         0)
                        .slice(0, 10)
         },
-        
+
     },
     mounted: function() {
         this.$on('update-all-anime', () => this.updateAll('anime', 'allAnime') );

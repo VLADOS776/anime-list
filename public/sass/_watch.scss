@@ -53,13 +53,17 @@
                     padding-left: 10px;
                     cursor: pointer;
                     font-size: 0.9rem;
-                    &.active {
+                    &.active, &.selected {
                         background-color: $primaryColor;
                         color: $dark;
+                        a {
+                            color: $dark;
+                        }
                     }
-                    &:hover {
+                    &:hover, a:hover {
                         background-color: lighten($primaryColor, 10);
                         color: $dark;
+                        text-decoration: none;
                     }
                     .hosting {
                         font-size: 0.7rem;
@@ -74,6 +78,10 @@
                         float: right;
                         vertical-align: middle;
                         color: #97cdfc;
+                    }
+                    a {
+                        color: #fff;
+                        text-decoration: none;
                     }
                 }
                 

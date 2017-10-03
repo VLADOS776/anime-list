@@ -1,0 +1,37 @@
+extends layout
+
+block content
+    div.anime
+        .mb-2
+            a.btn.btn-outline-secondary.btn-sm(href='/')
+                i.fa.fa-arrow-left(aria-hidden='true')
+                |  Назад
+        .d-flex.info
+            .left-side.mr-4
+                img(src='https://shikimori.org/'+anime.image.original)
+            .right-side.d-flex.flex-column.justify-content-around
+                div
+                    div
+                        h5= anime.russian + ' '
+                            small.text-muted= new Date(anime.aired_on).getFullYear()
+                        h6= anime.name
+                    div
+                        each genre in anime.genres
+                            span.genre= genre.russian
+                div
+                    if anime.status == 'released'
+                        span.text-primary= anime.episodes + ' / ' + anime.episodes + ' эп.'
+                    else
+                        span.text-primary= anime.episodes_aired + ' / ' + anime.episodes > 0 ? anime.episodes : '??' + ' эп.'
+                    |  • 
+                    span.text-primary= anime.duration + ' мин.'
+                if anime.watched
+                    div= 'Просмотрено: ' + anime.watched
+                div.mt-3
+                    a.btn.btn-outline-warning(href='/watch/' + anime.id)
+                        i.fa.fa-play
+                        |  Смотреть
+        .description
+            b Описание:
+            p= anime.description
+        

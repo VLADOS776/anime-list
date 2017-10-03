@@ -1,38 +1,58 @@
-var request = require('request');
+var Shikimori = require('node-shikimori').Shikimori,
+    config = require('./config'),
+    log = require('./log');
 
-function main(url, callback) {
-    request({ url: url }, function(err, response, body) {
-        if (err) console.log(err);
+let opt = {};
 
-        try {
-            let anime = JSON.parse(body);
-            
-            callback(null, anime)
-        } catch (e) {
-            console.error(e)
-            callback(e);
+if (config.get('shikimori.token')) {
+    opt.token = config.get('shikimori.token');
+} else if (config.get('shikimori.nickname') && config.get('shikimori.password')) {
+    opt.nickname = config.get('shikimori.nickname');
+    opt.password = config.get('shikimori.password');
+}
+
+let client = null;
+
+if (!DEV) {
+    Shikimori(opt, (err, cl) => {
+        if (err) {
+            log.error(err);
         }
-    })
+        client = cl;
+        module.exports.client = cl;
+    });
 }
 
 module.exports.anime = {};
 module.exports.anime.info = function(id, callback) {
-    main("https://shikimori.org/api/animes/" + id, callback);
+    client.get('animes/' + id, (err, info, res) => {
+        callback(err, info);
+    })
 }
 module.exports.anime.related = function(id, callback) {
-    main("https://shikimori.org/api/animes/" + id +'/related', callback);
+    client.get('animes/' + id + '/related', (err, info, res) => {
+        callback(err, info);
+    })
 }
 module.exports.anime.externalLinks = function(id, callback) {
-    main("https://shikimori.org/api/animes/" + id + '/external_links', callback);
+    client.get('animes/' + id + '/external_links', (err, info, res) => {
+        callback(err, info);
+    })
 }
 
 module.exports.manga = {};
 module.exports.manga.info = function(id, callback) {
-    main("https://shikimori.org/api/mangas/" + id, callback);
+    client.get('mangas/' + id, (err, info, res) => {
+        callback(err, info);
+    })
 }
 module.exports.manga.related = function(id, callback) {
-    main("https://shikimori.org/api/mangas/" + id + '/related', callback);
+    client.get('mangas/' + id + '/related', (err, info, res) => {
+        callback(err, info);
+    })
 }
 module.exports.manga.externalLinks = function(id, callback) {
-    main("https://shikimori.org/api/mangas/" + id + '/external_links', callback);
+    client.get('mangas/' + id + '/external_links', (err, info, res) => {
+        callback(err, info);
+    })
 }

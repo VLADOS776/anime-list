@@ -5,13 +5,17 @@
   "scripts": {
     "start": "electron .",
     "bundle": "browserify --ignore-missing --no-builtins --no-commondir --insert-global-vars=\"global\" -t vueify -e public/js/main.js -o public/js/build.js --no-commondir",
-    "build": "electron-packager . AnimeList --platform=win32 --arch=x64 --electron-version=1.4.12 --out=dist --ignore=dist --asar=true --prune --overwrite --icon=icons/AL.ico",
-    "build-32": "electron-packager . AnimeList --platform=win32 --arch=ia32 --electron-version=1.4.12 --out=dist --asar=true --ignore=dist --prune --overwrite --icon=icons/AL.ico",
-    "build-linux": "electron-packager . AnimeList --platform=linux --arch=x64 --electron-version=1.4.12 --out=dist --asar=true --ignore=dist --prune --overwrite"
+    "build": "electron-packager . AnimeList --platform=win32 --arch=x64 --out=dist --ignore=dist --asar=true --prune --overwrite --icon=icons/AL.ico",
+    "build-32": "electron-packager . AnimeList --platform=win32 --arch=ia32 --out=dist --asar=true --ignore=dist --prune --overwrite --icon=icons/AL.ico",
+    "build-linux": "electron-packager . AnimeList --platform=linux --arch=x64 --out=dist --asar=true --ignore=dist --prune --overwrite"
   },
   "dependencies": {
+    "body-parser": "^1.18.2",
     "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.1",
     "nedb": "^1.8.0",
+    "node-shikimori": "^1.0.2",
+    "pug": "^2.0.0-rc.4",
     "request": "^2.82.0",
     "vue-scrollto": "^2.7.8",
     "vue-shortkey": "^3.0.2",

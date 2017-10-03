@@ -106,6 +106,8 @@ hr {
       background: rgba(0, 0, 0, 0.7);
       padding: 1rem;
       transition: all 0.4s linear; }
+      .start .watching .card .card-body .card-text {
+        font-size: 1rem; }
     .start .watching .card:hover .card-body {
       display: block; }
 .start .cards-wrap.short {
@@ -115,7 +117,8 @@ hr {
   -webkit-column-count: 5;
   column-count: 5; }
 .start .card {
-  cursor: pointer; }
+  cursor: pointer;
+  color: #fff; }
   .start .card .card-img-overlay {
     top: inherit;
     padding: 0.5rem;
@@ -309,12 +312,15 @@ body.overflow {
         padding-left: 10px;
         cursor: pointer;
         font-size: 0.9rem; }
-        .watch .video-variants .card .video-players li.active {
+        .watch .video-variants .card .video-players li.active, .watch .video-variants .card .video-players li.selected {
           background-color: #FCE397;
           color: #282C2F; }
-        .watch .video-variants .card .video-players li:hover {
+          .watch .video-variants .card .video-players li.active a, .watch .video-variants .card .video-players li.selected a {
+            color: #282C2F; }
+        .watch .video-variants .card .video-players li:hover, .watch .video-variants .card .video-players li a:hover {
           background-color: #fdf0c9;
-          color: #282C2F; }
+          color: #282C2F;
+          text-decoration: none; }
         .watch .video-variants .card .video-players li .hosting {
           font-size: 0.7rem;
           color: #828282;
@@ -327,6 +333,9 @@ body.overflow {
           float: right;
           vertical-align: middle;
           color: #97cdfc; }
+        .watch .video-variants .card .video-players li a {
+          color: #fff;
+          text-decoration: none; }
       .watch .video-variants .card .video-players::-webkit-scrollbar-thumb {
         background: #FCE397;
         -webkit-border-radius: 10px; }
