@@ -54,6 +54,13 @@ function update(dbName, item, callback) {
         if (typeof callback === 'function') callback(newDoc);
     })
 }
+function set(dbName, animeId, set, callback) {
+    db[dbName].update({ id: animeId }, { $set: set }, {}, function(err, newDoc) {
+        if (err) console.error(err);
+
+        if (typeof callback === 'function') callback(newDoc);
+    })
+}
 
 // ====== Anime ======
 
@@ -79,6 +86,9 @@ module.exports.anime.watchEp = function(animeId, ep, callback) {
 
         if (typeof callback === 'function') callback(newDoc);
     })
+}
+module.exports.anime.set = function(animeId, setObj, callback) {
+    set('anime', animeId, setObj, callback);
 }
 module.exports.anime.DB = db.anime;
 
@@ -113,5 +123,8 @@ module.exports.manga.bookmark = function(mangaId, bookmark, callback) {
 
         if (typeof callback === 'function') callback(newDoc);
     })
+}
+module.exports.manga.set = function(mangaId, setObj, callback) {
+    set('manga', mangaId, setObj, callback);
 }
 module.exports.manga.DB = db.manga;

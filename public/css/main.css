@@ -311,7 +311,8 @@ body.overflow {
         padding: 2px;
         padding-left: 10px;
         cursor: pointer;
-        font-size: 0.9rem; }
+        font-size: 0.9rem;
+        word-break: break-all; }
         .watch .video-variants .card .video-players li.active, .watch .video-variants .card .video-players li.selected {
           background-color: #FCE397;
           color: #282C2F; }

@@ -53,6 +53,7 @@
                     padding-left: 10px;
                     cursor: pointer;
                     font-size: 0.9rem;
+                    word-break: break-all;
                     &.active, &.selected {
                         background-color: $primaryColor;
                         color: $dark;

@@ -1,7 +1,9 @@
 var $ = jQuery = require('./js/libs/jquery-3.2.1.min.js'),
     bootstrap = require('./js/libs/bootstrap.min.js');
 
-var remote = require('electron').remote;
+var remote = require('electron').remote,
+    {dialog} = require('electron').remote,
+    fs = require('fs');
 
 var Vue = require('./js/libs/vue.js'),
     db = require('./js/db.js'),
@@ -232,6 +234,12 @@ Vue.component('anime', {
                 'btn-warning': this.anime.watched === this.anime.availableEp
             }
         },
+        dirClass: function() {
+            return {
+                'btn-outline-warning': !this.anime.folder,
+                'btn-warning': this.anime.folder
+            }
+        },
         nextEpDate: function() {
             if (this.anime.status == 'ongoing' && this.anime.next_episode_at) {
                 let d = new Date(this.anime.next_episode_at);
@@ -338,6 +346,23 @@ Vue.component('anime', {
                     }
                 })
             }
+        },
+        selectDir: function() {
+            let folder = null;
+            if (!this.anime.folder) {
+                folder = dialog.showOpenDialog({
+                    properties: ['openDirectory']
+                })
+    
+                if (folder && folder.length) {
+                    folder = folder[0];
+                }
+            }
+            db.anime.set(this.anime.id, { folder: folder }, (newDoc) => {
+                if (newDoc) {
+                    this.$set(this.anime, 'folder', folder);
+                }
+            })
         }
     },
     created: function() {
@@ -350,7 +375,10 @@ Vue.component('watch', {
         return {
             videos: null,
             loading: false,
-            loadingVideo: false
+            loadingVideo: false,
+            local: false,
+            localFile: null,
+            epRegEx: /[-._ \[]+(?:[ _.-]*(?:ep?[ .]?)?(\d{1,3})(?:[_ ]?v\d+)?)+/i
         }
     },
     props: ['watch', 'anime'],
@@ -363,7 +391,19 @@ Vue.component('watch', {
     },
     watch: {
         'watch.ep': function() {
-            this.loadPlayer();
+            if (!this.local) {
+                this.loadPlayer();
+            }
+        },
+        'local': function() {
+            if (!this.local) {
+                this.localFile = null;
+            }
+        },
+        'localFile': function(newVal) {
+            if (newVal && newVal.episode) {
+                this.watch.ep = newVal.episode
+            }
         }
     },
     methods: {
@@ -418,22 +458,57 @@ Vue.component('watch', {
                     self.$root.$emit('update-all-anime');
                 })
             } else {
-                if (!this.anime.watched || this.watch.ep > this.anime.watched) {
-                    db.anime.watchEp(this.anime.id, this.watch.ep);
-                } else if (this.watch.ep < this.anime.watched) {
-                    db.anime.watchEp(this.anime.id, this.watch.ep - 1);
+                let mark = this.watch.ep;
+                if (this.watch.ep < this.anime.watched) {
+                    mark--;
                 }
-                this.$root.$emit('update-all-anime');
+                db.anime.watchEp(this.anime.id, mark);
+                this.$set(this.anime, 'watched', mark);
             }
         },
         change_videoId: function(videoId) {
             this.watch.videoId = videoId;
             this.loadPlayer(true);
+        },
+        localToggle: function() {
+            this.local = !this.local;
         }
     },
     created: function() {
         log.info('Watch screen created!');
         this.loadPlayer()
+
+        if (this.anime.folder) {
+            try {
+                let files = fs.readdirSync(this.anime.folder).sort();
+
+                if (files && files.length) {
+                    let localFiles = files
+                        .filter(file => {
+                            return file.match(/\.\w{3}$/)
+                        })
+                        .map(file => {
+                            let tmp = file.match(this.epRegEx),
+                                ep = null;
+
+                            if (tmp && tmp.length) {
+                                ep = parseInt(tmp[1]);
+                            }
+                            let path = this.anime.folder.replace(/\\/g, '/') + '/' + file;
+
+                            return {
+                                name: file,
+                                path: path,
+                                url: 'file:///' + path,
+                                episode: ep
+                            }
+                        })
+                    this.$set(this.anime, 'localFiles', localFiles);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
     }
 })
 
@@ -760,7 +835,14 @@ Vue.component('settings', {
     template: '#settings-tmp',
     data: function() {
         return {
-            server: server
+            server: server,
+            serverPort: config.get('server.port', 3000),
+            localIP: null
+        }
+    },
+    watch: {
+        serverPort: function() {
+            config.set('server.port', parseInt(this.serverPort));
         }
     },
     computed: {
@@ -776,6 +858,11 @@ Vue.component('settings', {
                 this.server.stop();
             }
         }
+    },
+    created: function() {
+        require('dns').lookup(require('os').hostname(), (err, add, fam) => {
+            this.localIP = add;
+        })
     }
 })
 Vue.component('about', {

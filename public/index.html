@@ -36,6 +36,9 @@
             <a class="navbar-brand" href="#" @click="start_page">Anime List 3.0 <span>v{{appVersion}}</span></a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" @click="change_page('settings')">Настройки</a>
+                    </li>
                     <li class="nav-item active">
                         <a class="nav-link" href="#" @click="change_page('about')"><i class="fa fa-info" aria-hidden="true"></i></a>
                     </li>
@@ -167,6 +170,9 @@
                         <button class="btn btn-outline-warning" @click="watchButton"><i class="fa fa-play"></i> Смотреть</button>
                         <button class="btn" :class="favoriteClass" @click="favorite"><i class="fa fa-star"></i> В избранное</button>
                         <button class="btn" :class="alreadyWatchedClass" @click="alreadyWatched"><i class="fa fa-check"></i> Уже просмотрено</button>
+                        <button class="btn" :class="dirClass" @click="selectDir">
+                            <i class="fa fa-folder-open"></i> <span v-if='!anime.folder'>Указать</span><span v-else>Убрать</span> папку
+                        </button>
                     </div>
                 </div>
             </div>
@@ -192,19 +198,32 @@
         <div class="watch">
             <div class='load-spinner' v-if="loading"></div>
             <div v-else>
-                <div class='mb-2'>
-                    <button class="btn btn-outline-secondary btn-sm" @click="back"><i class="fa fa-arrow-left" aria-hidden="true"></i> Назад</button>
+                <div class="d-flex mb-2 justify-content-between">
+                    <div>
+                        <button class="btn btn-outline-secondary btn-sm" @click="back"><i class="fa fa-arrow-left" aria-hidden="true"></i> Назад</button>
+                    </div>
+                    <div class="btn-group" data-toggle='buttons' v-if='anime.localFiles'>
+                        <label class="btn btn-secondary" :class='{active: !local}' @click='localToggle'>
+                            <input type="radio" name='watchType' id='online' :cheked='!local'> Онлайн просмотр
+                        </label>
+                        <label class="btn btn-secondary" :class='{active: local}' @click='localToggle'>
+                            <input type="radio" name='watchType' id='offline' :cheked='local'> Локальные файлы
+                        </label>
+                    </div>
                 </div>
                 <h3 class="mb-2">{{ anime.russian }} [{{ watch.ep }} / {{ anime.episodes_aired || anime.episodes }}]</h3>
                 <div class="row">
                     <div class="col-lg-8 mb-3">
                         <div class="player-contaier embed-responsive embed-responsive-16by9">
                             
-                            <iframe :src="videoEmbed" frameborder="0" id="player" class='embed-responsive-item' v-if="!loadingVideo" allowfullscreen></iframe>
+                            <video :src="localFile.url" class='embed-responsive-item' v-if='localFile' controls>Ошибка загрузки видео</video>
+                            <iframe :src="videoEmbed" frameborder="0" id="player" class='embed-responsive-item' v-else-if="!loadingVideo" allowfullscreen></iframe>
                             <div class='load-spinner center' v-else></div>
                         </div>
                     </div>
-                    <div class="col-lg-4 video-variants">
+
+                    <!-- Онлайн просмотр -->
+                    <div class="col-lg-4 video-variants" v-if='!local'>
                         <b-card no-body>
                             <b-tabs ref="tabs">
                                 <b-tab title="Озвучка" active>
@@ -233,6 +252,21 @@
                         <select id="select-ep" class="form-control" v-model="watch.ep">
                             <option v-for="epNum in anime.availableEp" :value="epNum" @click="watch.videoId=null">{{epNum}} серия</option>
                         </select>
+                    </div>
+
+                    <!-- Локальные файлы в папке -->
+                    <div class="col-lg-4 video-variants" v-else>
+                        <b-card no-body>
+                            <b-tabs ref='tabs'>
+                                <b-tab title='Файлы в папке' active>
+                                    <ul class="video-players local">
+                                        <li v-for="file in anime.localFiles" class="d-flex justify-content-between" :class='{active: file == localFile}' @click='localFile = file'>
+                                            <span>{{file.name}}</span>
+                                        </li>
+                                    </ul>
+                                </b-tab>
+                            </b-tabs>
+                        </b-card>
                     </div>
                 </div>
                 <div class="d-flex justify-content-between mt-3">
@@ -409,12 +443,25 @@
             </ul>
             <div class="tab-content p-3">
                 <div class="tab-pane fade show active" id="server">
-                    <p class='rounded p-2 text-white text-center' :class="{'bg-success': server.active, 'bg-dark': !server.active}">
-                        Состояние сервера: {{serverStatus}}
-                    </p>
-                    <div class="d-flex justify-content-center">
-                        <button class="btn btn-success" v-if='!server.active' @click='toggleServer'>Включить сервер</button>
-                        <button class="btn btn-danger" v-if='server.active' @click='toggleServer'>Выключить сервер</button>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            Состояние сервера
+                        </div>
+                        <div class="col-sm-9 rounded p-2 text-white text-center" :class="{'bg-success': server.active, 'bg-dark': !server.active}">
+                            {{serverStatus}}
+                            <span v-if='server.active'><br>Сервер доступен по адресу {{localIP}}:{{serverPort}}</span>
+                        </div>
+                        <div class="col-sm-3 mt-2">
+                            Порт
+                        </div>
+                        <div class="col-sm-9 mt-2">
+                            <input type="number" class="form-control" placeholder="Укажите порт" v-model='serverPort'>
+                            <span class="text-muted">При смене порта необходимо перезапустить сервер.</span>
+                        </div>
+                        <div class="mt-3" style='margin: auto'>
+                            <button class="btn btn-success" v-if='!server.active' @click='toggleServer'>Включить сервер</button>
+                            <button class="btn btn-danger" v-if='server.active' @click='toggleServer'>Выключить сервер</button>
+                        </div>
                     </div>
                 </div>
             </div>
