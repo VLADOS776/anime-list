@@ -1,0 +1,17 @@
+
+
+mixin related(relate_list)
+    div
+        hr
+        h5 Связанное
+        .related
+            each relate in relate_list
+                if relate.anime
+                    .d-flex.anime
+                        .img-wrap
+                            a(href='/anime/' + relate.anime.id)
+                                img(src='https://shikimori.org/'+relate.anime.image.x96, alt='')
+                        div
+                            h6= relate.anime.russian
+                            div= `${relate.anime.kind} ${new Date(relate.anime.aired_on).getFullYear()} г.`
+                            div= relate.relation_russian

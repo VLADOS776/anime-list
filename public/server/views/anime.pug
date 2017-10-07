@@ -1,4 +1,5 @@
 extends layout
+include mixins
 
 block content
     div.anime
@@ -34,4 +35,5 @@ block content
         .description
             b Описание:
             p= anime.description
-        
+        if anime.related
+            +related(anime.related)

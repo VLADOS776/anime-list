@@ -1,10 +1,12 @@
 const config = require('./js/config'),
       db = require('./js/db'),
-      online = require('./js/online');
+      online = require('./js/online'),
+      {anime: animeInfo} = require('./js/shikimoriInfo');
 
 const express = require('express'),
       app = express(),
-      bodyParser = require('body-parser');
+      bodyParser = require('body-parser'),
+      path = require('path');
 
 const util = require('util'),
       EventEmmiter = require('events');
@@ -12,13 +14,13 @@ const util = require('util'),
 let SERVER = null;
 
 app.set('view engine', 'pug');
-app.set('views', './public/server/views');
+app.set('views', path.join(__dirname, 'server', 'views'));
 
-app.use('/css', express.static('./public/css'));
-app.use('/fonts', express.static('./public/fonts'));
-app.use('/img', express.static('./public/img'));
-app.use('/js', express.static('./public/js/libs'));
-app.use('/serverjs', express.static('./public/server/js'));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/fonts', express.static(path.join(__dirname, 'fonts')));
+app.use('/img', express.static(path.join(__dirname, 'img')));
+app.use('/js', express.static(path.join(__dirname, 'js', 'libs')));
+app.use('/serverjs', express.static(path.join(__dirname, 'server', 'js')));
 
 app.use(bodyParser.urlencoded({extend: false }));
 app.use(bodyParser.json());
@@ -37,16 +39,45 @@ Server.prototype.start = function() {
 
     app.get('/anime/:id', (req, res) => {
         db.anime.get({ id: parseInt(req.params.id) }, { russian: 1 }, (anime) => {
-            if (anime && anime.length) anime = anime[0]
-            res.render('anime', { anime: anime })
+            if (anime && anime.length) {
+                related(anime[0]);
+            } else {
+                animeInfo.info(parseInt(req.params.id), (error, anime) => {
+                    if (anime) {
+                        related(anime);
+                    }
+                })
+            }
         })
+
+        function related(anime) {
+            animeInfo.related(anime.id, (error, related) => {
+                if (related) {
+                    anime.related = related;
+                }
+                render(anime);
+            })
+        }
+        function render(anime) {
+            res.render('anime', {anime: anime});
+        }
     })
 
     app.get('/watch/:id', (req, res) => {
         db.anime.get({ id: parseInt(req.params.id) }, { russian: 1 }, (anime) => {
-            if (anime && anime.length) anime = anime[0];
-            anime.availableEp = anime.episodes_aired || anime.episodes;
+            if (anime && anime.length) {
+                render(anime[0]);
+            } else {
+                animeInfo.info(parseInt(req.params.id), (error, anime) => {
+                    if (anime) {
+                        render(anime);
+                    }
+                })
+            }
+        })
 
+        function render(anime) {
+            anime.availableEp = anime.episodes_aired || anime.episodes;
             let watch = {};
             watch.ep = anime.watched ? anime.watched + 1 : 1;
             if (watch.ep > anime.availableEp) watch.ep = anime.availableEp;
@@ -62,7 +93,7 @@ Server.prototype.start = function() {
             online.getPlayers(anime.id, watch.ep, watch.videoId, function(vids) {
                 res.render('watch', { anime: anime, watch: watch, videos: vids })
             })
-        })
+        }
     })
     
     app.post('/api/watched', (req, res) => {

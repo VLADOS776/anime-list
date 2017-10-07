@@ -216,7 +216,9 @@
                     <div class="col-lg-8 mb-3">
                         <div class="player-contaier embed-responsive embed-responsive-16by9">
                             
-                            <video :src="localFile.url" class='embed-responsive-item' v-if='localFile' controls>Ошибка загрузки видео</video>
+                            <video :src="localFile.url" class='embed-responsive-item' v-if='localFile' controls id='localPlayer'>
+                                <!-- <track label="Russian" kind="subtitles" srclang="ru" :src="localFile.subs.url" default v-if='localFile.subs'> -->
+                            </video>
                             <iframe :src="videoEmbed" frameborder="0" id="player" class='embed-responsive-item' v-else-if="!loadingVideo" allowfullscreen></iframe>
                             <div class='load-spinner center' v-else></div>
                         </div>

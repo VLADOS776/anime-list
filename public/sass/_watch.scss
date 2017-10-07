@@ -107,4 +107,14 @@
     #select-ep {
         margin-top: 1rem;
     }
+
+    /* Субтитры у видео */
+    $stroke: 2px;
+    ::cue {
+        background: transparent;
+        text-shadow: #000 0px 0px $stroke,   #000 0px 0px $stroke,   #000 0px 0px $stroke,
+        #000 0px 0px $stroke,   #000 0px 0px $stroke,   #000 0px 0px $stroke;
+        font-family: Tahoma;
+        font-weight: bold;
+    }
 }

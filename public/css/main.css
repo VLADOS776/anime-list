@@ -1,3 +1,4 @@
+@charset "UTF-8";
 button.btn i {
   margin-right: 5px; }
 
@@ -268,86 +269,93 @@ body.overflow {
       max-width: 800px;
       max-height: 100%; }
 
-.watch .player-contaier {
-  max-height: 625px;
-  position: relative;
-  overflow: visible; }
-  .watch .player-contaier:after {
-    content: '';
-    position: absolute;
-    z-index: -2;
-    box-shadow: 0 26px 15px rgba(0, 0, 0, 0.35);
-    bottom: 0;
-    left: 10px;
-    right: 10px;
-    border-radius: 100%;
-    height: 20px; }
-.watch .video-variants {
-  padding: 0; }
-  .watch .video-variants .card {
-    background-color: rgba(0, 0, 0, 0.2); }
-    .watch .video-variants .card .nav-tabs {
-      justify-content: space-between; }
-      .watch .video-variants .card .nav-tabs .nav-item a {
-        color: #fff; }
-        .watch .video-variants .card .nav-tabs .nav-item a.active, .watch .video-variants .card .nav-tabs .nav-item a:hover {
-          background-color: rgba(0, 0, 0, 0.3);
-          color: #FCE397;
-          border-color: transparent;
-          border-bottom: 2px solid #FCE397; }
-        .watch .video-variants .card .nav-tabs .nav-item a:hover {
-          color: #b3b3b3; }
-    .watch .video-variants .card .video-players {
-      list-style: none;
-      line-height: 1.4rem;
-      padding: 0;
-      margin: 0;
-      max-height: 312px;
-      overflow-y: auto; }
-      @media (max-width: 1200px) {
-        .watch .video-variants .card .video-players {
-          max-height: 243px; } }
-      .watch .video-variants .card .video-players li {
-        padding: 2px;
-        padding-left: 10px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        word-break: break-all; }
-        .watch .video-variants .card .video-players li.active, .watch .video-variants .card .video-players li.selected {
-          background-color: #FCE397;
-          color: #282C2F; }
-          .watch .video-variants .card .video-players li.active a, .watch .video-variants .card .video-players li.selected a {
+.watch {
+  /* ╨б╤Г╨▒╤В╨╕╤В╤А╤Л ╤Г ╨▓╨╕╨┤╨╡╨╛ */ }
+  .watch .player-contaier {
+    max-height: 625px;
+    position: relative;
+    overflow: visible; }
+    .watch .player-contaier:after {
+      content: '';
+      position: absolute;
+      z-index: -2;
+      box-shadow: 0 26px 15px rgba(0, 0, 0, 0.35);
+      bottom: 0;
+      left: 10px;
+      right: 10px;
+      border-radius: 100%;
+      height: 20px; }
+  .watch .video-variants {
+    padding: 0; }
+    .watch .video-variants .card {
+      background-color: rgba(0, 0, 0, 0.2); }
+      .watch .video-variants .card .nav-tabs {
+        justify-content: space-between; }
+        .watch .video-variants .card .nav-tabs .nav-item a {
+          color: #fff; }
+          .watch .video-variants .card .nav-tabs .nav-item a.active, .watch .video-variants .card .nav-tabs .nav-item a:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #FCE397;
+            border-color: transparent;
+            border-bottom: 2px solid #FCE397; }
+          .watch .video-variants .card .nav-tabs .nav-item a:hover {
+            color: #b3b3b3; }
+      .watch .video-variants .card .video-players {
+        list-style: none;
+        line-height: 1.4rem;
+        padding: 0;
+        margin: 0;
+        max-height: 312px;
+        overflow-y: auto; }
+        @media (max-width: 1200px) {
+          .watch .video-variants .card .video-players {
+            max-height: 243px; } }
+        .watch .video-variants .card .video-players li {
+          padding: 2px;
+          padding-left: 10px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          word-break: break-all; }
+          .watch .video-variants .card .video-players li.active, .watch .video-variants .card .video-players li.selected {
+            background-color: #FCE397;
             color: #282C2F; }
-        .watch .video-variants .card .video-players li:hover, .watch .video-variants .card .video-players li a:hover {
-          background-color: #fdf0c9;
-          color: #282C2F;
-          text-decoration: none; }
-        .watch .video-variants .card .video-players li .hosting {
-          font-size: 0.7rem;
-          color: #828282;
-          white-space: nowrap;
-          text-align: right; }
-        .watch .video-variants .card .video-players li.eng:after {
-          content: 'English';
-          margin-right: 5px;
-          font-size: 0.7rem;
-          float: right;
-          vertical-align: middle;
-          color: #97cdfc; }
-        .watch .video-variants .card .video-players li a {
-          color: #fff;
-          text-decoration: none; }
-      .watch .video-variants .card .video-players::-webkit-scrollbar-thumb {
-        background: #FCE397;
-        -webkit-border-radius: 10px; }
-      .watch .video-variants .card .video-players::-webkit-scrollbar-track {
-        -webkit-box-shadow: inset 0 0 6px #a7a7a7;
-        -webkit-border-radius: 10px;
-        /* margin: 10px 0; */ }
-      .watch .video-variants .card .video-players::-webkit-scrollbar {
-        width: 5px; }
-.watch #select-ep {
-  margin-top: 1rem; }
+            .watch .video-variants .card .video-players li.active a, .watch .video-variants .card .video-players li.selected a {
+              color: #282C2F; }
+          .watch .video-variants .card .video-players li:hover, .watch .video-variants .card .video-players li a:hover {
+            background-color: #fdf0c9;
+            color: #282C2F;
+            text-decoration: none; }
+          .watch .video-variants .card .video-players li .hosting {
+            font-size: 0.7rem;
+            color: #828282;
+            white-space: nowrap;
+            text-align: right; }
+          .watch .video-variants .card .video-players li.eng:after {
+            content: 'English';
+            margin-right: 5px;
+            font-size: 0.7rem;
+            float: right;
+            vertical-align: middle;
+            color: #97cdfc; }
+          .watch .video-variants .card .video-players li a {
+            color: #fff;
+            text-decoration: none; }
+        .watch .video-variants .card .video-players::-webkit-scrollbar-thumb {
+          background: #FCE397;
+          -webkit-border-radius: 10px; }
+        .watch .video-variants .card .video-players::-webkit-scrollbar-track {
+          -webkit-box-shadow: inset 0 0 6px #a7a7a7;
+          -webkit-border-radius: 10px;
+          /* margin: 10px 0; */ }
+        .watch .video-variants .card .video-players::-webkit-scrollbar {
+          width: 5px; }
+  .watch #select-ep {
+    margin-top: 1rem; }
+  .watch ::cue {
+    background: transparent;
+    text-shadow: #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px;
+    font-family: Tahoma;
+    font-weight: bold; }
 
 .read .imgWrap img {
   max-width: 100%;

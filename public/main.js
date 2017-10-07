@@ -4,31 +4,44 @@ var $ = jQuery = require('./js/libs/jquery-3.2.1.min.js'),
 var remote = require('electron').remote,
     {dialog} = require('electron').remote,
     fs = require('fs');
+    
+// Google Analytics
+const Analytics = require('electron-google-analytics').default,
+    analytics = new Analytics('UA-26654861-22', { version: remote.app.getVersion() })
 
 var Vue = require('./js/libs/vue.js'),
     db = require('./js/db.js'),
     online = require('./js/online'),
     shikimori = require('./js/shikimoriInfo'),
-    animeInfo = require('./js/shikimoriInfo').anime,
-    mangaInfo = require('./js/shikimoriInfo').manga;
+    {anime: animeInfo, manga: mangaInfo} = require('./js/shikimoriInfo'),
+    subtitles = require('./js/subtitles');
 
 var onlineManga = require('./js/onlineManga.js');
 
 const log = require('./js/log'),
       config = require('./js/config');
 
-const ServerClass = require('./server'),
-      server = new ServerClass();
+/*const ServerClass = require('./server'),
+      server = new ServerClass();*/
 
 //var anime = require('animejs');
 
 var DEV = true;
 
-server.on('update-anime', function(data) {
+/*server.on('update-anime', function(data) {
     let anime = app.allAnime.find((anime) => anime.id === data.anime);
     
     anime[data.field] = data.value;
-})
+})*/
+
+function test(){
+    return analytics.screen('test', '1.0.0', 'com.app.test', 'com.app.installer', 'Test')
+  .then((response) => {
+    return response;
+  }).catch((err) => {
+    return err;
+  });
+}
 
 /* === TODO LIST ===
 ** TODO: Логин на shikimori и импорт списков.
@@ -403,6 +416,37 @@ Vue.component('watch', {
         'localFile': function(newVal) {
             if (newVal && newVal.episode) {
                 this.watch.ep = newVal.episode
+
+                // Ищем субтитры для локального файла
+                let subs = subtitles.searchSubForEp({ path: this.anime.folder, episode: newVal.episode })
+
+                // Если сабов нет в текущей папке, ищем отдельную папку с сабами
+                if (!subs.length) {
+                    let subFolders = subtitles.findSubFolder({ path: this.anime.folder });
+                    if (subFolders.length) {
+                        subFolders.forEach(folder => {
+                            let tmp = subtitles.searchSubForEp({ path: this.anime.folder + '/' + folder, episode: newVal.episode })
+                            if (tmp.length) {
+                                subs = tmp;
+                            }
+                        })
+                    }
+                }
+
+                if (subs && subs.length) {
+                    // Берем только первые сабы
+                    let firstSub = subs[0];
+
+                    if (firstSub.format !== 'vtt') {
+                        subtitles.convert({ file: firstSub.path }, (error, converted) => {
+                            if (error) console.error(error);
+                            if (converted) {
+                                this.addSubtitles(converted, true);
+                                this.$set(this.localFile, 'subs', converted);
+                            }
+                        })
+                    }
+                }
             }
         }
     },
@@ -432,6 +476,8 @@ Vue.component('watch', {
                     online.getVideoAsync(2000);
                 })
             }
+
+            analytics.send('event', this.anime.russian)
         },
         back: function() {
             this.$emit('change_page', 'anime')
@@ -472,7 +518,21 @@ Vue.component('watch', {
         },
         localToggle: function() {
             this.local = !this.local;
-        }
+        },
+        addSubtitles: function(subs, empty) {
+            if (empty) $('#localPlayer').empty();
+
+            let track = document.createElement('track');
+            track.kind = 'subtitles';
+            track.label = subs.name;
+            track.srclang = 'ru';
+            track.src = subs.url;
+            track.addEventListener('load', function() {
+                this.mode = 'showing';
+            })
+            $('#localPlayer').append(track);
+            document.getElementById('localPlayer').textTracks[0].mode = 'showing';
+        },
     },
     created: function() {
         log.info('Watch screen created!');
@@ -483,6 +543,8 @@ Vue.component('watch', {
                 let files = fs.readdirSync(this.anime.folder).sort();
 
                 if (files && files.length) {
+                    let subFound = false;
+
                     let localFiles = files
                         .filter(file => {
                             return file.match(/\.\w{3}$/)
@@ -494,15 +556,21 @@ Vue.component('watch', {
                             if (tmp && tmp.length) {
                                 ep = parseInt(tmp[1]);
                             }
+
                             let path = this.anime.folder.replace(/\\/g, '/') + '/' + file;
+                            let format = file.match(/\.(\w{3})$/)[1]
+                            let name = file.replace(/\.\w{3}/, '');
 
                             return {
-                                name: file,
+                                name: name,
                                 path: path,
+                                format: format,
                                 url: 'file:///' + path,
                                 episode: ep
                             }
+
                         })
+                    
                     this.$set(this.anime, 'localFiles', localFiles);
                 }
             } catch (error) {
@@ -847,16 +915,16 @@ Vue.component('settings', {
     },
     computed: {
         serverStatus: function() {
-            return this.server.active ? 'Включен' : 'Выключен'
+            return 'Выключен'//this.server.active ? 'Включен' : 'Выключен'
         }
     },
     methods: {
         toggleServer: function() {
-            if (!this.server.active) {
+            /*if (!this.server.active) {
                 this.server.start()
             } else {
                 this.server.stop();
-            }
+            }*/
         }
     },
     created: function() {
@@ -905,10 +973,14 @@ var app = new Vue({
                     this.selected = this.allAnime.find(el => el.id === anime);
 
                     this.currentPage = 'anime'
+
+                    analytics.pageview('http://anime-list.clan.su', '/program/anime/' + anime.id, anime.russian)
                 } else {
                     animeInfo.info(anime, (error, anime) => {
                         this.selected = anime;
                         this.currentPage = 'anime'
+
+                        analytics.pageview('http://anime-list.clan.su', '/program/anime/' + anime.id, anime.russian)
                     })
                 }
 
@@ -917,6 +989,8 @@ var app = new Vue({
 
                 this.selected = anime;
                 this.currentPage = 'anime'
+
+                analytics.pageview('http://anime-list.clan.su', '/program/anime/' + anime.id, anime.russian)
             }
         },
         showManga: function(manga) {
@@ -1006,6 +1080,7 @@ var app = new Vue({
         },
         change_page: function(page) {
             this.currentPage = page;
+            analytics.event('Change page', page)
         },
         isInDB: function(itemId, storeName='allAnime') {
             return typeof this[storeName].find(el => el.id === itemId) !== 'undefined'
