@@ -4,10 +4,6 @@ var $ = jQuery = require('./js/libs/jquery-3.2.1.min.js'),
 var remote = require('electron').remote,
     {dialog} = require('electron').remote,
     fs = require('fs');
-    
-// Google Analytics
-const Analytics = require('electron-google-analytics').default,
-    analytics = new Analytics('UA-26654861-22', { version: remote.app.getVersion() })
 
 var Vue = require('./js/libs/vue.js'),
     db = require('./js/db.js'),
@@ -21,27 +17,18 @@ var onlineManga = require('./js/onlineManga.js');
 const log = require('./js/log'),
       config = require('./js/config');
 
-/*const ServerClass = require('./server'),
-      server = new ServerClass();*/
+const ServerClass = require('./server'),
+      server = new ServerClass();
 
 //var anime = require('animejs');
 
 var DEV = true;
 
-/*server.on('update-anime', function(data) {
+server.on('update-anime', function(data) {
     let anime = app.allAnime.find((anime) => anime.id === data.anime);
     
     anime[data.field] = data.value;
-})*/
-
-function test(){
-    return analytics.screen('test', '1.0.0', 'com.app.test', 'com.app.installer', 'Test')
-  .then((response) => {
-    return response;
-  }).catch((err) => {
-    return err;
-  });
-}
+})
 
 /* === TODO LIST ===
 ** TODO: Логин на shikimori и импорт списков.
@@ -476,8 +463,6 @@ Vue.component('watch', {
                     online.getVideoAsync(2000);
                 })
             }
-
-            analytics.send('event', this.anime.russian)
         },
         back: function() {
             this.$emit('change_page', 'anime')
@@ -915,16 +900,16 @@ Vue.component('settings', {
     },
     computed: {
         serverStatus: function() {
-            return 'Выключен'//this.server.active ? 'Включен' : 'Выключен'
+            return this.server.active ? 'Включен' : 'Выключен'
         }
     },
     methods: {
         toggleServer: function() {
-            /*if (!this.server.active) {
+            if (!this.server.active) {
                 this.server.start()
             } else {
                 this.server.stop();
-            }*/
+            }
         }
     },
     created: function() {
@@ -973,14 +958,10 @@ var app = new Vue({
                     this.selected = this.allAnime.find(el => el.id === anime);
 
                     this.currentPage = 'anime'
-
-                    analytics.pageview('http://anime-list.clan.su', '/program/anime/' + anime.id, anime.russian)
                 } else {
                     animeInfo.info(anime, (error, anime) => {
                         this.selected = anime;
                         this.currentPage = 'anime'
-
-                        analytics.pageview('http://anime-list.clan.su', '/program/anime/' + anime.id, anime.russian)
                     })
                 }
 
@@ -989,8 +970,6 @@ var app = new Vue({
 
                 this.selected = anime;
                 this.currentPage = 'anime'
-
-                analytics.pageview('http://anime-list.clan.su', '/program/anime/' + anime.id, anime.russian)
             }
         },
         showManga: function(manga) {
@@ -1080,7 +1059,6 @@ var app = new Vue({
         },
         change_page: function(page) {
             this.currentPage = page;
-            analytics.event('Change page', page)
         },
         isInDB: function(itemId, storeName='allAnime') {
             return typeof this[storeName].find(el => el.id === itemId) !== 'undefined'
