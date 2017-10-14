@@ -30,6 +30,24 @@ body {
     .btn-outline-warning.disabled:hover {
       color: #fff; }
 
+.form-control {
+  background-color: #282C2F;
+  color: #d6d6d6; }
+  .form-control:focus {
+    background-color: #282C2F;
+    color: #d6d6d6;
+    border-color: #FCE397; }
+
+.nav-tabs .nav-link {
+  color: #fff; }
+  .nav-tabs .nav-link.active, .nav-tabs .nav-link:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+    color: #FCE397;
+    border-color: transparent;
+    border-bottom: 2px solid #FCE397; }
+  .nav-tabs .nav-link:hover {
+    color: #b3b3b3; }
+
 hr {
   height: 1.5rem;
   background-image: repeating-linear-gradient(-45deg, rgba(39, 39, 39, 0.45), rgba(39, 39, 39, 0.45) 2px, transparent 2px, transparent 6px);
@@ -91,6 +109,58 @@ hr {
 @keyframes circle-spin {
   100% {
     transform: rotate(360deg); } }
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 55px;
+  height: 25px; }
+
+/* Hide default HTML checkbox */
+.switch input {
+  display: none; }
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s; }
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 3px;
+  background-color: rgba(0, 0, 0, 0.6);
+  -webkit-transition: .4s;
+  transition: .4s; }
+
+input:checked + .slider {
+  background-color: #FCE397; }
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #FCE397; }
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px); }
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px; }
+
+.slider.round:before {
+  border-radius: 50%; }
+
 .start .watching {
   flex-wrap: nowrap;
   overflow-y: hidden;
@@ -111,33 +181,39 @@ hr {
         font-size: 1rem; }
     .start .watching .card:hover .card-body {
       display: block; }
-.start .cards-wrap.short {
+
+.cards-wrap.short {
   max-height: 550px;
   overflow: hidden; }
-.start .card-columns {
+
+.card-columns {
   -webkit-column-count: 5;
   column-count: 5; }
-.start .card {
+
+.card {
   cursor: pointer;
   color: #fff; }
-  .start .card .card-img-overlay {
+  .card .card-img-overlay {
     top: inherit;
     padding: 0.5rem;
     padding-bottom: 0.2rem;
     background: linear-gradient(transparent, #000);
     padding-top: 2.5rem; }
-  .start .card img {
+  .card img {
     max-width: 300px; }
-  .start .card h4.card-title {
+  .card h4.card-title {
     font-size: 1rem; }
-  .start .card h6.card-subtitle {
+  .card h6.card-subtitle {
     font-size: 0.7rem; }
+  .card:hover {
+    color: #fff; }
 
 .anime .info .left-side, .manga .info .left-side {
   position: relative; }
   .anime .info .left-side img.thumb, .manga .info .left-side img.thumb {
     margin-right: 10px;
-    box-shadow: 4px 13px 40px rgba(0, 0, 0, 0.75); }
+    box-shadow: 4px 13px 40px rgba(0, 0, 0, 0.75);
+    max-width: 225px; }
 .anime .info .right-side, .manga .info .right-side {
   flex-grow: 2;
   position: relative; }
@@ -153,10 +229,24 @@ hr {
     margin-top: -6px; }
   .anime .info .right-side .genre, .manga .info .right-side .genre {
     cursor: pointer;
-    color: #bdbdbd;
+    color: #a3a3a3;
     font-size: 0.95em; }
     .anime .info .right-side .genre:not(:last-child):after, .manga .info .right-side .genre:not(:last-child):after {
       content: ', '; }
+  .anime .info .right-side .buttons > .btn, .manga .info .right-side .buttons > .btn {
+    margin-top: 0.5rem; }
+.anime .external_links a, .manga .external_links a {
+  padding: 2px 10px;
+  border-radius: 4px;
+  color: #d6d6d6;
+  border: 1px solid #c4c4c4; }
+  .anime .external_links a:hover, .manga .external_links a:hover {
+    background: #FCE397;
+    border-color: #FCE397;
+    color: #3d3d3d;
+    text-decoration: none; }
+.anime ul.notes, .manga ul.notes {
+  list-style: none; }
 .anime .related, .manga .related {
   column-count: 2; }
   .anime .related > div, .manga .related > div {
@@ -200,7 +290,7 @@ hr {
       border-bottom: 1px solid #3f464b;
       margin-top: 7px;
       margin-bottom: 2px;
-      color: #bdbdbd;
+      color: #a3a3a3;
       display: block; }
       .navbar #searchResult .header-2 {
         text-align: center; }

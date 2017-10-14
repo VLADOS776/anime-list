@@ -26,6 +26,7 @@ if (!DEV) {
 module.exports.anime = {};
 module.exports.anime.info = function(id, callback) {
     client.get('animes/' + id, (err, info, res) => {
+        info.source = 'https://shikimori.org/';
         callback(err, info);
     })
 }
@@ -43,6 +44,7 @@ module.exports.anime.externalLinks = function(id, callback) {
 module.exports.manga = {};
 module.exports.manga.info = function(id, callback) {
     client.get('mangas/' + id, (err, info, res) => {
+        info.source = 'https://shikimori.org/'
         callback(err, info);
     })
 }

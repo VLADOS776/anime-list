@@ -23,17 +23,23 @@ block content
                     if anime.status == 'released'
                         span.text-primary= anime.episodes + ' / ' + anime.episodes + ' эп.'
                     else
-                        span.text-primary= anime.episodes_aired + ' / ' + anime.episodes > 0 ? anime.episodes : '??' + ' эп.'
+                        span.text-primary= anime.episodes_aired + ' / ' + (anime.episodes > 0 ? anime.episodes : '??') + ' эп.'
                     |  • 
                     span.text-primary= anime.duration + ' мин.'
                 if anime.watched
                     div= 'Просмотрено: ' + anime.watched
-                div.mt-3
+                div.buttons
                     a.btn.btn-outline-warning(href='/watch/' + anime.id)
                         i.fa.fa-play
                         |  Смотреть
         .description
             b Описание:
             p= anime.description
+        if anime.notes
+            hr
+            h5 Заметки
+            ul.notes
+                each note, ep in anime.notes
+                    li= `Эпизод ${ep}: ${note}`
         if anime.related
             +related(anime.related)

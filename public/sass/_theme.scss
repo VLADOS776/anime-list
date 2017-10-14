@@ -1,6 +1,8 @@
 $fontColor: #d6d6d6;
-$fontColor2: darken($fontColor, 10);
-$fontColor3: darken($fontColor, 20);
+$fontColor2: darken($fontColor, 20);
+$fontColor3: darken($fontColor, 40);
+$fontColor4: darken($fontColor, 60);
+$fontColor5: darken($fontColor, 80);
 
 $primaryColor: #FCE397;
 
@@ -31,6 +33,28 @@ body {
         }
     }
 }
+.form-control {
+    background-color: $dark;
+    color: $fontColor;
+    &:focus {
+        background-color: $dark;
+        color: $fontColor;
+        border-color: $primaryColor;
+    }
+}
+.nav-tabs .nav-link {
+    color: #fff;
+    &.active, &:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+        color: $primaryColor;
+        border-color: transparent;
+        border-bottom: 2px solid $primaryColor;
+    }
+    &:hover {
+        color: darken(#fff, 30);
+    }
+}
+
 hr {
     height: 1.5rem;
     background-image: repeating-linear-gradient(-45deg, rgba(39, 39, 39, 0.45), rgba(39, 39, 39, 0.45) 2px, transparent 2px, transparent 6px);

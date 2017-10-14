@@ -14,12 +14,15 @@ var requestHeaders = {
 
 module.exports = {
     config: {
-        sites: ['readmanga.me', 'mintmanga.com']
+        sites: ['readmanga.me', 'mintmanga.com'],
+        type: 'manga',
+        can: ['info', 'read']
     },
-    /*
-        Информация о манге
-        url - ссылка вида 'readmanga.me/manga_name'
-    */
+    /**
+     * Информация о манге
+     * @param {String} url - Ссылка вида 'readmanga.me/manga_name'
+     * @param {mangaInfoCallback} callback - Callback информации
+     */
     mangaInfo: function(url, callback) {
         // Удаляем лишнее
         if (url.indexOf('/vol') !== -1) {
@@ -99,6 +102,11 @@ module.exports = {
         url - ссылка вида 'readmanga.me/manga_name/vol5/3?mtr=1'
         Ссылку на первую главу брать из mangaInfo.startReadLink
     */
+    /**
+     * Получить список ссылок на изображения для главы
+     * @param {string} url - Ссылка вида 'readmanga.me/manga_name/vol5/3?mtr=1'
+     * @param {function} callback - Callback
+     */
     getChapter: function(url, callback) {
         request({ url: url, headers: requestHeaders }, function(err, response, body) {
             if (err) {
@@ -157,3 +165,19 @@ module.exports = {
         })
     },
 }
+/**
+ * Callback информации о манге
+ * @callback mangaInfoCallback
+ * @param {string} name - Название манги на английском
+ * @param {string} russian - Название манги на русском
+ * @param {number} score - Рейтинг манги
+ * @param {number} volumes - Количество томов
+ * @param {number} chapters - Количество глав
+ * @param {string[]} genres - Жанры
+ * @param {number} year - Год выпуска
+ * @param {string} description - Описание
+ * @param {Object[]} chapterLinks - Ссылки на главы
+ * @param {string} chapterLinks[].link - Ссылка на главу
+ * @param {string} chapterLinks[].name - Название главы
+ * @param {string} startReadLink - Ссылка на начало чтения (первая глава)
+ */

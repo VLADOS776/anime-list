@@ -5,6 +5,7 @@
             img.thumb {
                 margin-right: 10px;
                 box-shadow: 4px 13px 40px rgba(0, 0, 0, 0.75);
+                max-width: 225px;
             }
         }
         .right-side {
@@ -30,8 +31,31 @@
                 &:not(:last-child):after {
                     content: ', ';
                 }
+            };
+            .buttons > .btn {
+                margin-top: 0.5rem;
             }
         }
+    }
+
+    .external_links {
+        a {
+            padding: 2px 10px;
+            border-radius: 4px;
+            color: #d6d6d6;
+            border: 1px solid #c4c4c4;
+
+            &:hover {
+                background: $primaryColor;
+                border-color: $primaryColor;
+                color: $fontColor4;
+                text-decoration: none;
+            }
+        }
+    }
+
+    ul.notes {
+        list-style: none;
     }
     
     .related {

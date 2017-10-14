@@ -57,6 +57,25 @@ module.exports.getPlayers = function(animeId, ep, videoId, callback) {
     }
 }
 
+module.exports.removeAd = function() {
+    let iframe = document.getElementById('player'),
+        url = new URL(iframe.getAttribute('src')),
+        iframeContent = iframe.contentDocument;
+
+    if (url.host === 'smotret-anime.ru') {
+        let embed = iframeContent.querySelector('.embed-container');
+        for (let i = (embed.children.length - 1); i != 0; i--) {
+            let elem = embed.children[i];
+            if (!/(?:main-video|adblock-check)/.test(elem.getAttribute('id'))) {
+                elem.remove();
+            }
+        }
+    } else if (url.host === 'myvi.ru') {
+        let ads = iframeContent.querySelector('.player-adslot');
+        if (ads) ads.remove();
+    }
+}
+
 module.exports.getVideo = function() {
     let url = document.getElementById('player').getAttribute('src');
     domain = /:\/\/(.*?)\//.exec(url);

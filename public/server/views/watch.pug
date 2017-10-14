@@ -28,7 +28,7 @@ block content
                                 each video in videos.fandub
                                     if video.author && video.author.length
                                         li(class=video.video_id === videos.player.video_id ? 'selected' : '')
-                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?videoId=${video.video_id}`)
+                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?episode=${watch.ep}&videoId=${video.video_id}`)
                                                 span= video.author
                                                 span.hosting= video.hosting
                         div.tab-pane.fade#sub(role='tabpanel', aria-labelledby="sub-tab")
@@ -36,7 +36,7 @@ block content
                                 each video in videos.sub
                                     if video.author && video.author.length
                                         li(class=video.video_id === videos.player.video_id ? 'selected' : '', class=video.kindClass && video.kindClass.indexOf('english') !== -1 ? 'eng' : '')
-                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?videoId=${video.video_id}`)
+                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?episode=${watch.ep}&videoId=${video.video_id}`)
                                                 span= video.author
                                                 span.hosting= video.hosting
                         div.tab-pane.fade#raw(role='tabpanel', aria-labelledby="raw-tab")
@@ -44,7 +44,7 @@ block content
                                 each video in videos.raw
                                     if video.author && video.author.length
                                         li(class=video.video_id === videos.player.video_id ? 'selected' : '')
-                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?videoId=${video.video_id}`)
+                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?episode=${watch.ep}&videoId=${video.video_id}`)
                                                 span= video.author
                                                 span.hosting= video.hosting
                 select#select-ep.form-control
@@ -64,6 +64,8 @@ block content
             a.btn.btn-outline-warning(href=nextLink, class=watch.ep === anime.availableEp ? 'disabled' : '')
                 i.fa.fa-arrow-right(aria-hidden='true')
                 |  Следующая серия
+        .mb-3.mt-3.note
+            textarea#note.form-control(name="note", cols="30", rows="3", placeholder='Заметка о серии')= anime.notes ? anime.notes[watch.ep] : ''
     script.
         var anime = !{JSON.stringify(anime)}
         var watch = !{JSON.stringify(watch)}

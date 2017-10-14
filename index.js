@@ -1,7 +1,6 @@
-const electron = require('electron');
-const app = electron.app;  // Модуль контролирующей жизненный цикл нашего приложения.
-const BrowserWindow = electron.BrowserWindow;  // Модуль создающий браузерное окно.
-const path = require('path');
+const {app, BrowserWindow, ipcMain} = require('electron');
+const path = require('path'),
+      adBlock = require('./scripts/adblock.js');
 
 // Опционально возможность отправки отчета о ошибках на сервер проекта Electron.
 
@@ -64,6 +63,17 @@ app.on('ready', function () {
 
     // Открываем DevTools.
     // mainWindow.webContents.openDevTools();
+
+
+    // Блокируем рекламу в iframe
+    mainWindow.webContents.session.webRequest.onBeforeRequest(['*://*./*'], (details, callback) => {
+        if (adBlock.isBlocked(details.url)) {
+            mainWindow.webContents.send('adblock', details);
+            callback({ cancel: true });
+        } else {
+            callback({ cancel: false });
+        }
+    })
     
     mainWindow.on('close', () => {
         let data = {

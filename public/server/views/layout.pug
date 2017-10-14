@@ -9,7 +9,8 @@ html
         link(href='/css/font-awesome.min.css', rel='stylesheet')
         link(href='/css/main.css', rel='stylesheet')
     body
-        div.container.mt-3
+        include top-bar.pug
+        div.container.mt-3.mb-3
             block content
             
         script(src='/js/jquery-3.2.1.min.js')

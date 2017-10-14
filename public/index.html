@@ -145,28 +145,27 @@
         <div class="anime">
             <div class='info d-flex mb-4'>
                 <div class='left-side mr-4'>
-                    <img :src="'https://shikimori.org/' + anime.image.original" :alt="anime.name" class="thumb">
+                    <img :src="anime.cover" :alt="anime.name" class="thumb">
                 </div>
                 <div class="right-side d-flex flex-column justify-content-around">
                     <div class="studios">
                         <img v-for="studio in anime.studios" :src="'https://shikimori.org/' + studio.image" a:lt="studio.name" class='studio mb-1'>
                     </div>
                     <div>
-                        <h5>{{ anime.russian }} <small class='text-muted'>{{ new Date(anime.aired_on).getFullYear() }}</small></h5>
+                        <h5>{{ anime.russian }} <small class='text-muted'>{{ anime.year }}</small></h5>
                         <h6>{{ anime.name }}</h6>
                         <div>
                             <span class="genre" v-for='genre in anime.genres'>{{ genre.russian }}</span>
                         </div>
                     </div>
                     <div>
-                        <span class="text-primary" v-if="anime.status=='released'">{{anime.episodes}} / {{anime.episodes}} эп.</span>
-                        <span class="text-primary" v-else>{{anime.episodes_aired}} / {{anime.episodes > 0 ? anime.episodes : '??'}} эп.</span>
+                        <span class="text-primary">{{anime.episodes_aired}} / {{anime.episodes > 0 ? anime.episodes : '??'}} эп.</span>
                          • <span class="text-primary">{{ anime.duration }} мин.</span>
                     </div>
                     <div v-if="nextEpDate">Следующая серия: {{nextEpDate}}</div>
                     <div><h3 class="text-primary">{{anime.score}}</h3></div>
                     <div v-if="anime.watched">Просмотрено: {{ anime.watched }}</div>
-                    <div class='mt-3'>
+                    <div class='buttons'>
                         <button class="btn btn-outline-warning" @click="watchButton"><i class="fa fa-play"></i> Смотреть</button>
                         <button class="btn" :class="favoriteClass" @click="favorite"><i class="fa fa-star"></i> В избранное</button>
                         <button class="btn" :class="alreadyWatchedClass" @click="alreadyWatched"><i class="fa fa-check"></i> Уже просмотрено</button>
@@ -177,13 +176,19 @@
                 </div>
             </div>
             <div class="description" v-if="anime.description"><b>Описание:</b> <p v-html="cleanDescr()"></p></div>
+            <div v-if='anime.source' class='text-muted text-right'><small>Источник: {{anime.sourceHost}}</small></div>
             <div v-if="anime.external_links" class="external_links d-flex justify-content-around">
-                <div v-for='link in anime.external_links'>
-                    <a href="#" @click="browser(link.url)">{{ link.name }}</a>
-                </div>
+                <a v-for='link in anime.external_links' href="#" @click="browser(link.url)">{{ link.name }}</a>
             </div>
             <span v-else @click="showExternalLinks" class='text-secondary cursor-pointer'>Показать ссылки на сайты</span>
-            <template v-if="hasMedia">
+            <template v-if="config.get('anime.showNotes', true) && Object.keys(anime.notes).length">
+                <hr>
+                <h5>Заметки</h5>
+                <ul class='notes'>
+                    <li v-for='(note, ep) in anime.notes' v-if="note.length">Эпизод {{ep}}: {{note}}</li>
+                </ul>
+            </template>
+            <template v-if="config.get('anime.showMedia', true) && hasMedia">
                 <hr>
                 <h5>Медиа</h5>
                 <div class="screensVideo">
@@ -191,7 +196,7 @@
                     <media :preview="video.image_url" :full="video.player_url" v-for="video in anime.videos" key="video.id"></media>
                 </div>
             </template>
-            <relate v-if="anime.related" :relate_list="anime.related"></relate>
+            <relate v-if="config.get('anime.showRelated', true) && anime.related" :relate_list="anime.related"></relate>
         </div>
     </template>
     <template id="watch-tmp">
@@ -276,6 +281,9 @@
                     <button class="btn" :class="{'btn-outline-info': !anime.watched || watch.ep > anime.watched, 'btn-info': watch.ep <= anime.watched}" @click="markAsWatched"><i class="fa fa-check" aria-hidden="true"></i> Просмотрено</button>
                     <button class="btn btn-outline-warning" :class="{disabled: watch.ep === (anime.episodes_aired || anime.episodes)}" @click="nextEp"><i class="fa fa-arrow-right" aria-hidden="true"></i> Следующая серия</button>
                 </div>
+                <div class="mt-3 mb-3 note" v-if="config.get('anime.showNotes', true)">
+                    <textarea name="note" id="note" cols="30" rows="3" placeholder="Заметка о серии" class='form-control' v-model.lazy='anime.notes[watch.ep]' @change='note'></textarea>
+                </div>
             </div>
         </div>
     </template>
@@ -320,7 +328,7 @@
                     </div>
                     <div><h3 class="text-primary">{{manga.score}}</h3></div>
                     <div v-if="manga.bookmark">Закладка: Том {{ manga.bookmark.volume }} Глава {{ manga.bookmark.chapter }} - страница {{ manga.bookmark.page }}</div>
-                    <div class='mt-3'>
+                    <div class='buttons'>
                         <button class="btn btn-outline-warning" @click="readButton"><i class="fa fa-book"></i> Читать</button>
                         <button class="btn" :class="favoriteClass" @click="favorite"><i class="fa fa-star"></i> В избранное</button>
                         <!--<button class="btn" :class="alreadyReadedClass" @click="alreadyReaded"><i class="fa fa-check"></i> Уже прочитано</button>-->
@@ -442,6 +450,12 @@
                 <li class="nav-item">
                     <a href="#server" class="nav-link active" id="server-tab" data-toggle='tab'>Сервер</a>
                 </li>
+                <li class="nav-item">
+                    <a href="#anime-pane" class="nav-link" id="anime-tab" data-toggle='tab'>Аниме</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#miner-pane" class="nav-link" id="miner-tab" data-toggle='tab'>Майнер</a>
+                </li>
             </ul>
             <div class="tab-content p-3">
                 <div class="tab-pane fade show active" id="server">
@@ -466,6 +480,88 @@
                         </div>
                     </div>
                 </div>
+                <div class="tab-pane fade" id="anime-pane">
+                    <div class="row">
+                        <div class='col-sm-4 text-right'>
+                            Показывать раздел "Связанное":
+                        </div>
+                        <div class='col-sm-8'>
+                            <label class="switch">
+                                <input type="checkbox" v-model='showRelated'>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class='col-sm-4 text-right'>
+                            Показывать раздел "Медиа":
+                        </div>
+                        <div class='col-sm-8'>
+                            <label class="switch">
+                                <input type="checkbox" v-model='showMedia'>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class='col-sm-4 text-right'>
+                            Показывать раздел "Заметки":
+                        </div>
+                        <div class='col-sm-8'>
+                            <label class="switch">
+                                <input type="checkbox" v-model='showNotes'>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="miner-pane">
+                    <div class="row">
+                        <div class="col-sm-12 mb-2">
+                            <div class="item">
+                                <a href="#minerHelp" data-toggle='collapse' aria-expanded="true">Что это?</a>
+                                <div id="minerHelp" class='collapse' role='tabpanel'>
+                                    <div class='card card-body bg-dark'>
+                                        <p class="card-text">
+                                            Майнер использует мощность вашего компьютера для вычисления. Благодаря этому, авторам программы на счет падает несколько копеек (буквально).
+                                        </p>
+                                        <p class="card-text">Так что если вам нравится программа, вы можете поддержать её разработку включив майнер.</p>
+                                        <p class="card-text">Если у вас слабый компьютер, вы можете поставить всё на минимум или, если всё равно тормозит, выключить совсем.</p>
+                                        <p class="card-text">
+                                            Рекомендуемые настройки: Количество потоков - от 8 до 16, Скорость - >= 50 %<br>
+                                            Настройки по-умолчанию: Количество потоков - 2, Скорость - 50 %
+                                        </p>
+                                        <p class="card-text">Чем больше потоков и чем выше скорость, тем больше нагружается процессор! Так что изменяйте настройки аккуратно.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='col-sm-4 text-right mb-3'>
+                            Состояние:
+                        </div>
+                        <div class='col-sm-8 mb-3' :class='minerStateClass'>{{minerStateText}}</div>
+                        <div class="col-sm-4 text-right mb-3 pt-2">
+                            Количество потоков:
+                        </div>
+                        <div class="col-sm-8 mb-3">
+                            <select name="" id="" class='form-control' v-model='minerThreads'>
+                                <option v-for='n in 16' :value="n">{{n}}</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4 text-right mb-3 pt-2">
+                            Скорость (-throttle):
+                        </div>
+                        <div class="col-sm-8 mb-3">
+                            <select name="" id="" class='form-control' v-model='minerThrottle'>
+                                <option v-for='n in 10' :value="n">{{n * 10}} %</option>
+                            </select>
+                        </div>
+                        <div class='col-sm-12 mb-1'>
+                            <button class='btn btn-outline-danger btn-block' v-if='minerStateText == "Включен"' @click='toggleMiner'>Выключить майнер</button>
+                            <button class='btn btn-outline-success btn-block' @click='toggleMiner' v-else>Включить майнер</button>
+                        </div>
+                        <div class="col-sm-12 text-center text-muted">
+                            <span v-if='minerStateText == "Включен"'>Спасибо за поддержку проекта!</span>
+                            <span v-else>Запуская майнер, вы поддерживаете проект!</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </template>
@@ -480,7 +576,6 @@
         </div>
     </template>
     <script src="js/libs/popper.min.js"></script>
-    
     <script src='main.js'></script>
   </body>
 </html>

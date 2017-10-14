@@ -29,7 +29,7 @@ module.exports.get = function(param, def) {
     
     let val = config;
     for (let i = 0; i < path.length; i++) {
-        if (!val[path[i]]) return def;
+        if (val[path[i]] == null) return def;
         
         val = val[path[i]];
     }

@@ -1,15 +1,25 @@
 {
   "name": "animelist",
-  "version": "1.1.0",
+  "version": "1.3.0",
   "main": "index.js",
+  "description": "Программа для просмотра аниме и чтения манги.",
+  "author": {
+    "name": "VLADOS776",
+    "email": "kurtukovvlad@gmail.com"
+  },
+  "homepage": "http://anime-list.clan.su/",
   "scripts": {
     "start": "electron .",
     "bundle": "browserify --ignore-missing --no-builtins --no-commondir --insert-global-vars=\"global\" -t vueify -e public/js/main.js -o public/js/build.js --no-commondir",
     "build": "electron-packager . AnimeList --platform=win32 --arch=x64 --out=dist --ignore=dist --asar=true --prune --overwrite --icon=icons/AL.ico",
     "build-32": "electron-packager . AnimeList --platform=win32 --arch=ia32 --out=dist --asar=true --ignore=dist --prune --overwrite --icon=icons/AL.ico",
-    "build-linux": "electron-packager . AnimeList --platform=linux --arch=x64 --out=dist --asar=true --ignore=dist --prune --overwrite"
+    "build-linux": "electron-packager . AnimeList --platform=linux --arch=x64 --out=dist --asar=true --ignore=dist --prune --overwrite",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist-linux": "electron-builder --linux"
   },
   "dependencies": {
+    "ass-to-vtt": "^1.1.1",
     "body-parser": "^1.18.2",
     "cheerio": "^1.0.0-rc.2",
     "express": "^4.16.1",
@@ -17,6 +27,7 @@
     "node-shikimori": "^1.0.2",
     "pug": "^2.0.0-rc.4",
     "request": "^2.82.0",
+    "srt-to-vtt": "^1.1.1",
     "vue-scrollto": "^2.7.8",
     "vue-shortkey": "^3.0.2",
     "winston": "^2.3.1",
@@ -25,6 +36,19 @@
   "devDependencies": {
     "browserify": "^14.4.0",
     "electron": "^1.6.11",
+    "electron-builder": "^19.34.2",
     "vueify": "^9.4.1"
+  },
+  "build": {
+    "appId": "animelist",
+    "productName": "Anime List",
+    "win": {
+      "icon": "icons/AL.ico"
+    },
+    "linux": {
+      "target": "zip",
+      "synopsis": "Программа для просмотра аниме и чтения манги.",
+      "icon": "icons/png"
+    }
   }
 }

@@ -3,6 +3,7 @@ var $ = jQuery = require('./js/libs/jquery-3.2.1.min.js'),
 
 var remote = require('electron').remote,
     {dialog} = require('electron').remote,
+    {ipcRenderer} = require('electron'),
     fs = require('fs');
 
 var Vue = require('./js/libs/vue.js'),
@@ -15,7 +16,8 @@ var Vue = require('./js/libs/vue.js'),
 var onlineManga = require('./js/onlineManga.js');
 
 const log = require('./js/log'),
-      config = require('./js/config');
+      config = require('./js/config'),
+      miner = require('./miner');
 
 const ServerClass = require('./server'),
       server = new ServerClass();
@@ -24,10 +26,26 @@ const ServerClass = require('./server'),
 
 var DEV = true;
 
-server.on('update-anime', function(data) {
-    let anime = app.allAnime.find((anime) => anime.id === data.anime);
+server.on('watched', function(data) {
+    let anime = app.allAnime.find((anime) => anime.id === data.animeId);
     
-    anime[data.field] = data.value;
+    if (anime) {
+        anime.watched = data.episode;
+        db.anime.watchEp(anime.id, data.episode);
+    } else {
+        animeInfo.info(data.animeId, (error, anime) => {
+            if (anime) {
+                db.anime.add(anime, () => {
+                    db.anime.watchEp(anime.id, data.episode);
+                    app.$emit('update-all-anime');
+                })
+            }
+        })
+    }
+})
+
+ipcRenderer.on('adblock', (event, arg) => {
+    console.warn(`Ad blocked!`, arg);
 })
 
 /* === TODO LIST ===
@@ -220,6 +238,11 @@ Vue.component('top-bar', {
 Vue.component('anime', {
     template: '#anime-tmp',
     props: ['anime'],
+    data: function() {
+        return {
+            config: config
+        }
+    },
     mixins: [Mixins.cleanDescr, Mixins.selectItem, Mixins.browser],
     computed: {
         favoriteClass: function() {
@@ -252,7 +275,9 @@ Vue.component('anime', {
             }
         },
         hasMedia: function() {
-            return this.anime.screenshots.length > 0 || this.anime.videos.length > 0
+            return this.anime.screenshots && this.anime.screenshots.length > 0 ? true :
+                   this.anime.videos && this.anime.videos.length > 0 ? true :
+                   false;
         }
     },
     watch: {
@@ -327,11 +352,15 @@ Vue.component('anime', {
             })
         },
         whenSelect: function() {
-            animeInfo.related(this.anime.id, (error, related) => {
-                if (related) {
-                    this.$set(this.anime, 'related', related);
+            if (!this.anime.source || this.anime.source.match(/shikimori/)) {
+                if (config.get('anime.showRelated', true)) {
+                    animeInfo.related(this.anime.id, (error, related) => {
+                        if (related) {
+                            this.$set(this.anime, 'related', related);
+                        }
+                    })
                 }
-            })
+            }
 
             if (this.anime.inDB && this.anime.next_episode_at && new Date(this.anime.next_episode_at) - Date.now() < 0) {
                 animeInfo.info(this.anime.id, (error, anime) => {
@@ -378,7 +407,8 @@ Vue.component('watch', {
             loadingVideo: false,
             local: false,
             localFile: null,
-            epRegEx: /[-._ \[]+(?:[ _.-]*(?:ep?[ .]?)?(\d{1,3})(?:[_ ]?v\d+)?)+/i
+            epRegEx: /[-._ \[]+(?:[ _.-]*(?:ep?[ .]?)?(\d{1,3})(?:[_ ]?v\d+)?)+/i,
+            config: config
         }
     },
     props: ['watch', 'anime'],
@@ -394,6 +424,9 @@ Vue.component('watch', {
             if (!this.local) {
                 this.loadPlayer();
             }
+        },
+        'loadingVideo': function() {
+            this.removeAdInIframe();
         },
         'local': function() {
             if (!this.local) {
@@ -451,7 +484,7 @@ Vue.component('watch', {
                 online.getPlayers(this.anime.id, this.watch.ep, this.watch.videoId, function(vids) {
                     self.videos = vids;
                     self.loading = false;
-                    online.getVideoAsync(2000);
+                    //online.getVideoAsync(2000);
                 })
             } else {
                 // Загрузить только видео
@@ -460,7 +493,7 @@ Vue.component('watch', {
                 online.getPlayers(this.anime.id, this.watch.ep, this.watch.videoId, function(vids) {
                     self.videos.player = vids.player;
                     self.loadingVideo = false;
-                    online.getVideoAsync(2000);
+                    //online.getVideoAsync(2000);
                 })
             }
         },
@@ -518,6 +551,21 @@ Vue.component('watch', {
             $('#localPlayer').append(track);
             document.getElementById('localPlayer').textTracks[0].mode = 'showing';
         },
+        removeAdInIframe: function() {
+            try {
+                let iframe = document.querySelector('iframe#player');
+                iframe.onload = function() {
+                    online.removeAd();
+                    console.log('Ad in iframe removed');
+                }    
+            } catch (error) {}
+        },
+        note: function() {
+            db.anime.set(this.anime.id, { notes: this.anime.notes });
+        }
+    },
+    mounted: function() {
+        this.$nextTick(() => this.removeAdInIframe());
     },
     created: function() {
         log.info('Watch screen created!');
@@ -890,17 +938,59 @@ Vue.component('settings', {
         return {
             server: server,
             serverPort: config.get('server.port', 3000),
-            localIP: null
+            localIP: null,
+            miner: miner,
+            minerThreads: config.get('miner.threads', 2),
+            minerThrottle: config.get('miner.throttle', 0.5) * 10
         }
     },
     watch: {
         serverPort: function() {
             config.set('server.port', parseInt(this.serverPort));
+        },
+        minerThreads: function() {
+            config.set('miner.threads', this.minerThreads);
+            this.miner.miner.setNumThreads(this.minerThreads);
+        },
+        minerThrottle: function() {
+            let thorottle = this.minerThrottle / 10;
+            config.set('miner.throttle', thorottle);
+            this.miner.miner.setThrottle(1-thorottle);
         }
     },
     computed: {
         serverStatus: function() {
             return this.server.active ? 'Включен' : 'Выключен'
+        },
+        minerStateText: function() {
+            return this.miner.miner.isRunning() ? 'Включен' : 'Выключен'
+        },
+        minerStateClass: function() {
+            return this.miner.miner.isRunning() ? 'text-success' : 'text-danger'
+        },
+        showRelated: {
+            get: function() {
+                return config.get('anime.showRelated', true);
+            },
+            set: function(newVal) {
+                config.set('anime.showRelated', newVal);
+            }
+        },
+        showMedia: {
+            get: function() {
+                return config.get('anime.showMedia', true);
+            },
+            set: function(newVal) {
+                config.set('anime.showMedia', newVal);
+            }
+        },
+        showNotes: {
+            get: function() {
+                return config.get('anime.showNotes', true);
+            },
+            set: function(newVal) {
+                config.set('anime.showNotes', newVal);
+            }
         }
     },
     methods: {
@@ -910,6 +1000,16 @@ Vue.component('settings', {
             } else {
                 this.server.stop();
             }
+        },
+        toggleMiner: function() {
+            if (miner.miner.isRunning()) {
+                miner.stop();
+                config.set('miner.autorun', false);
+            } else {
+                miner.start();
+                config.set('miner.autorun', true);
+            }
+            this.$forceUpdate();
         }
     },
     created: function() {
@@ -946,6 +1046,20 @@ var app = new Vue({
             if (this.selected.url.match('/mangas')) {
                 this.selected.inDB = this.isInDB(newVal.id, 'allManga');
             }
+            if (this.selected.aired_on) {
+                this.selected.year = new Date(this.selected.aired_on).getFullYear()
+            }
+            if (this.selected.image && this.selected.image.original) {
+                this.selected.cover = 'https://shikimori.org/' + this.selected.image.original
+            }
+            if (this.selected.status && this.selected.status == 'released') {
+                this.selected.episodes_aired = this.selected.episodes;
+            }
+            if (!this.selected.source) this.selected.source = 'https://shikimori.org/';
+            this.selected.sourceHost = new URL(this.selected.source).host;
+
+            // Заметки
+            this.selected.notes = this.selected.notes || {};
         }
     },
     methods: {
@@ -966,7 +1080,7 @@ var app = new Vue({
                 }
 
             } else {
-                log.info('Show anime: %s', anime.id);
+                log.info('Show anime: %s', anime.id || anime);
 
                 this.selected = anime;
                 this.currentPage = 'anime'

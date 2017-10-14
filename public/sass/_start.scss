@@ -26,33 +26,36 @@
         }
     }
     
-    .cards-wrap.short {
-        max-height: 550px;
-        overflow: hidden;
+}
+.cards-wrap.short {
+    max-height: 550px;
+    overflow: hidden;
+}
+$cardsColumns: 5;
+.card-columns {
+    -webkit-column-count: $cardsColumns;
+    column-count: $cardsColumns;
+}
+.card {
+    cursor: pointer;
+    color: #fff;
+    .card-img-overlay {
+        top: inherit;
+        padding: 0.5rem;
+        padding-bottom: 0.2rem;
+        background: linear-gradient(transparent, #000);
+        padding-top: 2.5rem;
     }
-    $cardsColumns: 5;
-    .card-columns {
-        -webkit-column-count: $cardsColumns;
-        column-count: $cardsColumns;
+    img {
+        max-width: 300px;
     }
-    .card {
-        cursor: pointer;
+    h4.card-title {
+        font-size: 1rem;
+    }
+    h6.card-subtitle {
+        font-size: 0.7rem;
+    }
+    &:hover {
         color: #fff;
-        .card-img-overlay {
-            top: inherit;
-            padding: 0.5rem;
-            padding-bottom: 0.2rem;
-            background: linear-gradient(transparent, #000);
-            padding-top: 2.5rem;
-        }
-        img {
-            max-width: 300px;
-        }
-        h4.card-title {
-            font-size: 1rem;
-        }
-        h6.card-subtitle {
-            font-size: 0.7rem;
-        }
     }
 }

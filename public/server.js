@@ -32,9 +32,16 @@ function Server() {
 util.inherits(Server, EventEmmiter);
 Server.prototype.start = function() {
     app.get('/', (req, res) => {
-        db.anime.getAll((animes) => {
-            res.render('index', { animes: animes})
-        })
+        if (req.query && req.query.search) {
+            shikimori.client.get('animes', { search: req.query.search, limit: 20 }, function(err, response, body) {
+                if (err) log.error(err);
+                res.render('search', { query: req.query.search, results: response });
+            })
+        } else {
+            db.anime.getAll((animes) => {
+                res.render('index', { animes: animes})
+            })
+        }
     })
 
     app.get('/anime/:id', (req, res) => {
@@ -91,19 +98,33 @@ Server.prototype.start = function() {
             }
 
             online.getPlayers(anime.id, watch.ep, watch.videoId, function(vids) {
-                res.render('watch', { anime: anime, watch: watch, videos: vids })
+                res.render('watch', { anime: anime, watch: watch, videos: vids})
             })
         }
     })
     
     app.post('/api/watched', (req, res) => {
-        if (!req.body || !req.body.anime || !req.body.episode) {
+        if (!req.body || !req.body.animeId || !req.body.episode) {
             res.end('fail');
+            return;
+        }
+        let animeId = parseInt(req.body.animeId),
+            episode = parseInt(req.body.episode);
+
+        this.emit('watched', { animeId: animeId, episode: episode });
+        res.end('ok');
+    })
+
+    app.post('/api/note', (req, res) => {
+        if (!req.body || !req.body.anime || !req.body.notes) {
+            res.end('fail');
+            return;
         }
         let animeId = parseInt(req.body.anime),
-            episode = parseInt(req.body.episode);
-        db.anime.watchEp(animeId, episode, () => {
-            this.emit('update-anime', { anime: animeId, field: 'watched', value: episode });
+            noteObj = req.body.notes;
+        console.log(noteObj);
+        db.anime.set(animeId, { notes: noteObj }, () => {
+            this.emit('update-anime', { anime: animeId, field: 'notes', value: noteObj });
             res.end('ok');
         })
     })
