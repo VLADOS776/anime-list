@@ -17,7 +17,8 @@ var onlineManga = require('./js/onlineManga.js');
 
 const log = require('./js/log'),
       config = require('./js/config'),
-      miner = require('./miner');
+      miner = require('./miner'),
+      Plugins = require('./plugin');
 
 const ServerClass = require('./server'),
       server = new ServerClass();
@@ -50,6 +51,7 @@ ipcRenderer.on('adblock', (event, arg) => {
 
 /* === TODO LIST ===
 ** TODO: Логин на shikimori и импорт списков.
+** TODO: Собирать информацию с разных источников. Для сверки использовать название и год выпуска.
 */
 var Mixins = {
     browser: {
@@ -90,7 +92,7 @@ var Mixins = {
 
 Vue.use(require('./js/libs/bootstrap-vue.js'));
 Vue.use(require('vue-scrollto'));
-Vue.use(require('./js/libs/vue-shortkey.js'));
+Vue.use(require('./js/libs/vue-shortkey.js'), { prevent: ['input', 'textarea'] });
 
 Vue.component('start', {
     template: '#start-tmp',
@@ -205,7 +207,7 @@ Vue.component('top-bar', {
                 shikimori.client.get('animes', { search: self.search, limit: 10 }, function(err, response, body) {
                     self.oLoading_anime = false;
                     if (err) log.error(err);
- 
+                    
                     self.searchOnline_anime = response;
                 })
                 shikimori.client.get('mangas', { search: self.search, limit: 10 }, function(err, response, body) {
@@ -214,6 +216,7 @@ Vue.component('top-bar', {
                     
                     self.searchOnline_manga = response;
                 })
+                PluginEvent({ type: 'onlineSearch', query: self.search })
             }, 1000)
         },
         start_page: function() {
@@ -296,6 +299,8 @@ Vue.component('anime', {
                     db.anime.watchEp(self.anime.id, self.anime.availableEp, function() {
                         self.$set(self.anime, 'watched', self.anime.availableEp);
                         self.$root.$emit('update-all-anime');
+
+                        PluginEvent({ type: 'alreadyWatched' })
                     });
                 })
             } else {
@@ -303,11 +308,15 @@ Vue.component('anime', {
                     db.anime.watchEp(this.anime.id, 0, () => {
                         this.$set(this.anime, 'watched', 0);
                         this.$root.$emit('update-all-anime');
+
+                        PluginEvent({ type: 'alreadyWatched' })
                     });
                 } else {
                     db.anime.watchEp(this.anime.id, this.anime.availableEp, () => {
                         this.$set(this.anime, 'watched', this.anime.availableEp);
                         this.$root.$emit('update-all-anime');
+
+                        PluginEvent({ type: 'alreadyWatched' })
                     });
                 }
             }
@@ -317,11 +326,15 @@ Vue.component('anime', {
                 db.anime.add(JSON.parse(JSON.stringify(this.anime)), () => {
                     this.$set(this.anime, 'inDB', true);
                     this.$root.$emit('update-all-anime');
+
+                    PluginEvent({ type: 'favorite' })
                 })
             } else {
                 db.anime.remove(this.anime.id, () => {
                     this.$set(this.anime, 'inDB', false);
                     this.$root.$emit('update-all-anime');
+
+                    PluginEvent({ type: 'favorite' })
                 });
             }
         },
@@ -348,6 +361,8 @@ Vue.component('anime', {
                     })
                     links.splice(0,0, { url: 'https://shikimori.org/animes/' + this.anime.id, name: 'Shikimori' })
                     this.$set(this.anime, 'external_links', links);
+
+                    PluginEvent({ type: 'externalLinks', links: links })
                 }
             })
         },
@@ -390,6 +405,8 @@ Vue.component('anime', {
             db.anime.set(this.anime.id, { folder: folder }, (newDoc) => {
                 if (newDoc) {
                     this.$set(this.anime, 'folder', folder);
+
+                    PluginEvent({ type: 'setFolder', folder: folder })
                 }
             })
         }
@@ -485,6 +502,7 @@ Vue.component('watch', {
                     self.videos = vids;
                     self.loading = false;
                     //online.getVideoAsync(2000);
+                    PluginEvent({ type: 'watch', watch: self.watch })
                 })
             } else {
                 // Загрузить только видео
@@ -494,6 +512,7 @@ Vue.component('watch', {
                     self.videos.player = vids.player;
                     self.loadingVideo = false;
                     //online.getVideoAsync(2000);
+                    PluginEvent({ type: 'watch', watch: self.watch })
                 })
             }
         },
@@ -520,6 +539,8 @@ Vue.component('watch', {
                 db.anime.add(JSON.parse(JSON.stringify(this.anime)), function() {
                     db.anime.watchEp(self.anime.id, self.watch.ep);
                     self.$root.$emit('update-all-anime');
+
+                    PluginEvent({ type: 'markAsWatched', watch: self.watch })
                 })
             } else {
                 let mark = this.watch.ep;
@@ -528,11 +549,15 @@ Vue.component('watch', {
                 }
                 db.anime.watchEp(this.anime.id, mark);
                 this.$set(this.anime, 'watched', mark);
+
+                PluginEvent({ type: 'markAsWatched', watch: this.watch })
             }
         },
         change_videoId: function(videoId) {
             this.watch.videoId = videoId;
             this.loadPlayer(true);
+
+            PluginEvent({ type: 'changeVideo', watch: this.watch })
         },
         localToggle: function() {
             this.local = !this.local;
@@ -562,6 +587,8 @@ Vue.component('watch', {
         },
         note: function() {
             db.anime.set(this.anime.id, { notes: this.anime.notes });
+
+            PluginEvent({ type: 'addNote', notes: this.anime.notes, watch: this.watch })
         }
     },
     mounted: function() {
@@ -798,27 +825,30 @@ Vue.component('read', {
                 db.manga.add(JSON.parse(JSON.stringify(this.manga)), () => {
                     db.manga.bookmark(this.manga.id, bookmark);
                     
-                    this.$set(this.manga, 'bookmark', bookmark)
-                })           
+                    this.$set(this.manga, 'bookmark', bookmark);
+                    PluginEvent({ type: 'bookmark', added: true, watch: this.watch })
+                })
             } else {
                 if (this.bookmarkClass['btn-info']) {
                     // Если закладка уже стоит - удалить её.
                     db.manga.DB.update({ id: this.manga.id }, { $unset: { bookmark: true } }, {}, () => {
                         this.$set(this.manga, 'bookmark', null)
+                        PluginEvent({ type: 'bookmark', added: false, watch: this.watch })
                     })
-                    
                 } else {
                     db.manga.bookmark(this.manga.id, bookmark);
                     this.$set(this.manga, 'bookmark', bookmark)
+
+                    PluginEvent({ type: 'bookmark', added: true, watch: this.watch })
                 }
             }
-            
         },
         prevPage: function() {
             if (this.currentPage === 1) {
                 this.prevChapter();
             } else {
                 this.currentPage--;
+                PluginEvent({ type: 'prevPage', watch: this.watch })
             }
         },
         nextPage: function() {
@@ -826,6 +856,8 @@ Vue.component('read', {
                 this.nextChapter()
             } else {
                 this.currentPage++;
+
+                PluginEvent({ type: 'nextPage', watch: this.watch })
             }
         },
         preloadPage: function(pageNum) {
@@ -844,7 +876,7 @@ Vue.component('read', {
         },
         prevChapter: function() {
             if (this.prevChapterLink) {
-                this.loadChapter(this.prevChapterLink)
+                this.loadChapter(this.prevChapterLink);
             }
         },
         loadChapter: function(url) {
@@ -854,10 +886,11 @@ Vue.component('read', {
                 if (error != null) {
                     console.error("Can't load chapter");
                     if (error == 404) {
-                        this.error = 'Манга была удалена.'
+                        this.error = 'Манга была удалена.';
                     } else {
                         this.error = 'Ошибка при загрузки главы.'
                     }
+                    PluginEvent({ type: 'error', error: { msg: this.error }, watch: this.watch })
                 } else {
                     this.imgArray = chapter.images;
                     this.nextChapterLink = chapter.nextChapterLink;
@@ -866,6 +899,8 @@ Vue.component('read', {
                     this.watch.volume = chapter.volume;
                     this.watch.chapter = chapter.chapter;
                     this.$set(this, 'chapterUrl', url);
+
+                    PluginEvent({ type: 'loadChapter', watch: this.watch })
                 }
             })
         },
@@ -932,6 +967,99 @@ Vue.component('read', {
     }
 })
 
+Vue.component('plugin', {
+    props: ['plugin'],
+    template: '#plugin-tmp',
+    mixins: [Mixins.browser],
+    computed: {
+        active: {
+            get: function() {
+                return config.get('plugins.' + this.plugin.id + '.active', true)
+            },
+            set: function(val) {
+                this.plugin.active = val;
+                config.set('plugins.' + this.plugin.id + '.active', val);
+            }
+        }
+    }
+})
+
+Vue.component('plugin-search', {
+    template: '#plugin-search-tmp',
+    data: function() {
+        return {
+            query: '',
+            result: '',
+            loading: false,
+            timer: null
+        }
+    },
+    watch: {
+        query: function(val) {
+            this.search(val);
+        }
+    },
+    methods: {
+        search: function(query) {
+            if (this.timer) clearTimeout(this.timer);
+            this.loading = false;
+            
+            this.timer = setTimeout(() => {
+                this.loading = true;
+                Plugins.search(query).then((results) => {
+                    this.loading = false;
+                    this.result = results;
+                })
+            }, 1000);
+        }
+    },
+    mounted: function() {
+        this.search();
+    }
+})
+Vue.component('plugin-in-search', {
+    template: '#plugin-in-search-tmp',
+    props: ['plugin'],
+    mixins: [Mixins.browser],
+    data: function() {
+        return {
+            installing: false,
+            installed: false,
+            showRefresh: false,
+            error: null
+        }
+    },
+    computed: {
+        fixedName: function() {
+            return this.plugin.name.replace(/^al3.0-plugin/i, '')
+                                    .replace(/---/g, ' - ')
+                                    .replace(/(\w|\d|_|^)-(\w|\d|$)/g, '$1 $2')
+                                    .trim();
+        }
+    },
+    methods: {
+        download: function() {
+            let owner = this.plugin.full_name.split('/')[0],
+                repo = this.plugin.full_name.split('/')[1];
+            this.installing = true;
+            Plugins._download(owner, repo).then(_ => {
+                this.installing = false;
+                this.installed = true;
+                this.showRefresh = true;
+            }).catch(err => {
+                this.installed = false;
+                this.installing = false;
+                this.error = err;
+            }) 
+        }
+    },
+    mounted: function() {
+        if (Plugins.hasPlugin({ repo: this.plugin.html_url })) {
+            this.installed = true;
+        }
+    }
+})
+
 Vue.component('settings', {
     template: '#settings-tmp',
     data: function() {
@@ -941,7 +1069,8 @@ Vue.component('settings', {
             localIP: null,
             miner: miner,
             minerThreads: config.get('miner.threads', 2),
-            minerThrottle: config.get('miner.throttle', 0.5) * 10
+            minerThrottle: config.get('miner.throttle', 0.5) * 10,
+            pluginList: Plugins.getAllPlugins()
         }
     },
     watch: {
@@ -991,7 +1120,10 @@ Vue.component('settings', {
             set: function(newVal) {
                 config.set('anime.showNotes', newVal);
             }
-        }
+        },
+        /*pluginList: function() {
+            return 
+        }*/
     },
     methods: {
         toggleServer: function() {
@@ -1010,6 +1142,12 @@ Vue.component('settings', {
                 config.set('miner.autorun', true);
             }
             this.$forceUpdate();
+        },
+        openPluginDir: function() {
+            remote.shell.openItem(remote.app.getPath('userData') + '/plugins');
+        },
+        change_page: function(page) {
+            this.$emit('change_page', page)
         }
     },
     created: function() {
@@ -1070,12 +1208,15 @@ var app = new Vue({
 
                 if (this.isInDB(anime)) {
                     this.selected = this.allAnime.find(el => el.id === anime);
-
                     this.currentPage = 'anime'
+
+                    this.pluginsEmitSelect();
                 } else {
                     animeInfo.info(anime, (error, anime) => {
                         this.selected = anime;
                         this.currentPage = 'anime'
+
+                        this.pluginsEmitSelect();
                     })
                 }
 
@@ -1084,6 +1225,8 @@ var app = new Vue({
 
                 this.selected = anime;
                 this.currentPage = 'anime'
+
+                this.pluginsEmitSelect();
             }
         },
         showManga: function(manga) {
@@ -1093,12 +1236,15 @@ var app = new Vue({
 
                  if (this.isInDB(manga, 'allManga')) {
                     this.selected = this.allManga.find(el => el.id === manga);
-
                     this.currentPage = 'manga'
+
+                    this.pluginsEmitSelect();
                 } else {
                     mangaInfo.info(manga, (error, manga) => {
                         this.selected = manga;
                         this.currentPage = 'manga'
+
+                        this.pluginsEmitSelect();
                     })
                 }
             } else {
@@ -1106,6 +1252,8 @@ var app = new Vue({
 
                 this.selected = manga;
                 this.currentPage = 'manga'
+
+                this.pluginsEmitSelect();
             }
         },
         watchOnline: function() {
@@ -1173,9 +1321,17 @@ var app = new Vue({
         },
         change_page: function(page) {
             this.currentPage = page;
+
+            this.pluginsEmitSelect();
         },
         isInDB: function(itemId, storeName='allAnime') {
             return typeof this[storeName].find(el => el.id === itemId) !== 'undefined'
+        },
+        pluginsEmitSelect: function() {
+            // Ждем, когда пройдет анимация.
+            setTimeout(() => {
+                PluginEvent({ type: 'openPage' })
+            }, 550)
         }
     },
     computed: {
@@ -1195,9 +1351,17 @@ var app = new Vue({
         this.$on('update-all-manga', () => this.updateAllManga('manga', 'allManga') );
         this.$on('anime', this.showAnime );
         this.$on('manga', this.showManga );
+
+        Plugins.loadAllPlugins();
     },
     created: function() {
         this.updateAll('anime', 'allAnime');
         this.updateAll('manga', 'allManga');
     }
 })
+
+function PluginEvent(event = {}) {
+    event.selected = app.selected;
+    event.page = app.currentPage;
+    Plugins.$event(event);
+}

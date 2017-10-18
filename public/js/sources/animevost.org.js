@@ -73,7 +73,7 @@ module.exports = {
     info: function(opt) {
         return new Promise((res, rej) => {
             request({ url: opt.url }, function(err, response, body) {
-                if (err) rej(err);
+                if (err) res([]);
 
                 let $ = cheerio.load(body),
                     $info = $('.shortstoryContent'),
@@ -157,7 +157,7 @@ module.exports = {
                     ret.description = descr;
                 }
 
-                ret.source = 'http://animevost.org/';
+                ret.source = site;
                 ret.url = opt.url;
 
                 res(ret);

@@ -22,6 +22,7 @@
     "ass-to-vtt": "^1.1.1",
     "body-parser": "^1.18.2",
     "cheerio": "^1.0.0-rc.2",
+    "download-github-release": "^0.3.1",
     "express": "^4.16.1",
     "nedb": "^1.8.0",
     "node-shikimori": "^1.0.2",

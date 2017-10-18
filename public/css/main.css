@@ -460,4 +460,9 @@ body.overflow {
     max-width: 70px;
     display: inline-block; }
 
+.plugin__author {
+  margin-top: -10px;
+  display: block;
+  margin-bottom: .5rem; }
+
 /*# sourceMappingURL=main.css.map */

@@ -11,7 +11,7 @@
   <body>
     <div id="app">
         <top-bar :allanime="allAnime" @anime="showAnime" @change_page="change_page"></top-bar>
-        <div class="container mt-4">
+        <div class="container mt-4 mb-4">
             <transition name='slide' mode="out-in">
                 <component 
                     :is="currentPage"
@@ -45,8 +45,15 @@
                 </ul>
             </div>
             <form class="form-inline">
-                <!-- @blur="search=''" @input="onlineSearch" -->
-                <input class="form-control" type="text" placeholder="Поиск" aria-label="Search" v-model="search" @input="onlineSearch" @blur="search=''">
+                <!-- @blur="clear" @input="onlineSearch" -->
+                <input
+                    class="form-control"
+                    type="text"
+                    placeholder="Поиск"
+                    aria-label="Search"
+                    v-model="search"
+                    @input="onlineSearch"
+                    @blur="clear">
             </form>
             <transition name='fade'>
                 <div id="searchResult" v-show="search.length">
@@ -454,6 +461,9 @@
                     <a href="#anime-pane" class="nav-link" id="anime-tab" data-toggle='tab'>Аниме</a>
                 </li>
                 <li class="nav-item">
+                    <a href="#plugins-pane" class="nav-link" id="plugin-tab" data-toggle='tab'>Плагины</a>
+                </li>
+                <li class="nav-item">
                     <a href="#miner-pane" class="nav-link" id="miner-tab" data-toggle='tab'>Майнер</a>
                 </li>
             </ul>
@@ -511,6 +521,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="tab-pane fade" id="plugins-pane">
+                    <div class="text-muted mb-3 row justify-content-between">
+                        <button class="btn btn-outline-success" @click="change_page('plugin-search')">Поиск плагинов</button>
+                        <button class="btn btn-outline-success" onclick="location.reload()">Перезагрузить, чтобы изменения вступили в силу</button>
+                        <button class="btn btn-outline-info" @click="openPluginDir">Открыть папку с плагинами</button>
+                    </div>
+                    <plugin v-for="plugin in pluginList" :plugin="plugin"></plugin>
+                </div>
                 <div class="tab-pane fade" id="miner-pane">
                     <div class="row">
                         <div class="col-sm-12 mb-2">
@@ -562,6 +580,48 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </template>
+    <template id="plugin-tmp">
+        <div class='row mb-4 plugin'>
+            <div class='col-sm-10'>
+                <h5 class='plugin__name'>{{plugin.name}} <small class='plugin__version'>v{{plugin.version}}</small></h5>
+                <small class='plugin__author text-muted'>{{plugin.opt.author}}<span v-if="plugin.opt.repo"> | <a href="#" @click="browser(plugin.opt.repo)">repo</a></span></small>
+                <div class='plugin__description'>{{plugin.opt.description}}</div>
+            </div>
+            <div class="col-sm-2">
+                <label class="switch">
+                    <input type="checkbox" v-model='active'>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </template>
+    <template id="plugin-search-tmp">
+        <div class="plugin-search">
+            <input type="text" class="form-control" v-model="query" placeholder="Поиск плагинов (только на английском)...">
+            <div class='load-spinner' v-if="loading"></div>
+            <div v-if='result'>
+                <p>Найдено: {{result.total_count}}</p>
+                <div class="result">
+                    <plugin-in-search v-for='plugin in result.items' :plugin='plugin'></plugin-in-search>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id='plugin-in-search-tmp'>
+        <div class="plugin row mb-3">
+            <div class="col-sm-10">
+                <h5>{{fixedName}}</h5>
+                <p class="plugin__author text-muted">{{plugin.owner.login}} | <a href="#" @click="browser(plugin.html_url)">repo</a></p>
+                <p>{{plugin.description}}</p>
+            </div>
+            <div class="col-sm-2 text-center">
+                <button class="btn btn-outline-success" @click="download" v-if="!installed && !installing">Установить</button>
+                <div class="load-spinner" v-if='installing'></div>
+                <div v-if='installed'>Уже установлено</div>
+                <button class="btn btn-sm" onclick='location.reload()' v-if='showRefresh'>Перезагрузить</button>
             </div>
         </div>
     </template>

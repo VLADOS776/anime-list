@@ -1,4 +1,4 @@
-const blocked = require('./blocked');
+let blocked = require('./blocked');
 
 let allSites = '(' + blocked.join('|') + ')';
 
