@@ -138,5 +138,10 @@ Server.prototype.stop = function() {
     SERVER.close();
     this.active = false;
 }
+Server.prototype.app = function() {
+    return app;
+}
 
-module.exports = Server;
+
+
+module.exports = new Server();

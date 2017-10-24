@@ -1,0 +1,55 @@
+<div class="start">
+    <template v-if="watching && watching.length">
+        <h4>Смотрю</h4>
+        <div class="watching d-flex mb-3 pb-2">
+            <b-card overlay
+                v-for="anime in watching"
+                key="anime.id"
+                :img-src="'https://shikimori.org/' +anime.image.original"
+                :img-alt="anime.name"
+                :title="anime.russian"
+                :sub-title="anime.name"
+                @click="select_anime(anime)">
+                <p class='card-text'>{{anime.watched}} / {{anime.episodes_aired || anime.episodes}}</p>
+            </b-card>
+        </div>
+    </template>
+    <h4>Избранное аниме</h4>
+    <template v-if="all_anime && all_anime.length">
+        <div class="cards-wrap">
+            <b-card-group columns>
+                    <b-card overlay
+                        v-for="anime in all_anime"
+                        key="anime.id"
+                        :img-src="'https://shikimori.org/' +anime.image.original"
+                        :img-alt="anime.name"
+                        :title="anime.russian"
+                        :sub-title="anime.name"
+                        @click="select_anime(anime)">
+                    </b-card>
+            </b-card-group>
+        </div>
+    </template>
+    <template v-else>
+        <p>Здесь пока ничего нет. Используйте поиск, чтобы добавить аниме в избранное.</p>
+    </template>
+    <h4>Избранная манга</h4>
+    <template v-if="all_manga && all_manga.length">
+        <div class="cards-wrap">
+            <b-card-group columns>
+                    <b-card overlay
+                        v-for="manga in all_manga"
+                        key="manga.id"
+                        :img-src="'https://shikimori.org/' +manga.image.original"
+                        :img-alt="manga.name"
+                        :title="manga.russian"
+                        :sub-title="manga.name"
+                        @click="select_manga(manga)">
+                    </b-card>
+            </b-card-group>
+        </div>
+    </template>
+    <template v-else>
+        <p>Здесь пока ничего нет. Используйте поиск, чтобы добавить мангу в избранное.</p>
+    </template>
+</div>

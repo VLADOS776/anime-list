@@ -4,7 +4,8 @@ var $ = jQuery = require('./js/libs/jquery-3.2.1.min.js'),
 var remote = require('electron').remote,
     {dialog} = require('electron').remote,
     {ipcRenderer} = require('electron'),
-    fs = require('fs');
+    fs = require('fs'),
+    path = require('path');
 
 var Vue = require('./js/libs/vue.js'),
     db = require('./js/db.js'),
@@ -20,8 +21,7 @@ const log = require('./js/log'),
       miner = require('./miner'),
       Plugins = require('./plugin');
 
-const ServerClass = require('./server'),
-      server = new ServerClass();
+const server = require('./server');
 
 //var anime = require('animejs');
 
@@ -94,8 +94,12 @@ Vue.use(require('./js/libs/bootstrap-vue.js'));
 Vue.use(require('vue-scrollto'));
 Vue.use(require('./js/libs/vue-shortkey.js'), { prevent: ['input', 'textarea'] });
 
+function getTemplate(name) {
+    return fs.readFileSync(path.join(__dirname, 'templates', name + '.html'), 'utf-8')
+}
+
 Vue.component('start', {
-    template: '#start-tmp',
+    template: getTemplate('start'),
     props: ['all_anime', 'watching'],
     mixins: [Mixins.selectItem],
     computed: {
@@ -106,7 +110,7 @@ Vue.component('start', {
 })
 
 Vue.component('media', {
-    template: '#media-tmp',
+    template: getTemplate('media'),
     props: ['preview', 'full'],
     data: function() {
         return {
@@ -137,7 +141,7 @@ Vue.component('media', {
     }
 })
 Vue.component('relate', {
-    template: '#relate-tmp',
+    template: getTemplate('relate'),
     mixins: [Mixins.selectItem],
     props: ['relate_list'],
     methods: {
@@ -158,7 +162,7 @@ Vue.component('relate', {
     }
 })
 Vue.component('top-bar', {
-    template: '#topBar-tmp',
+    template: getTemplate('top-bar'),
     mixins: [Mixins.selectItem],
     props: ['allanime'],
     data: function() {
@@ -169,7 +173,11 @@ Vue.component('top-bar', {
             searchOnline_anime: [],
             searchOnline_manga: [],
             onlineSearchTimeout: null,
-            appVersion: remote.app.getVersion()
+            appVersion: remote.app.getVersion(),
+            nav: [
+                { name: 'Настройки', page: 'settings' },
+                { name: 'О программе', page: 'about' }
+            ]
         }
     },
     computed: {
@@ -239,7 +247,7 @@ Vue.component('top-bar', {
 })
 
 Vue.component('anime', {
-    template: '#anime-tmp',
+    template: getTemplate('anime'),
     props: ['anime'],
     data: function() {
         return {
@@ -416,7 +424,7 @@ Vue.component('anime', {
     }
 })
 Vue.component('watch', {
-    template: '#watch-tmp',
+    template: getTemplate('watch'),
     data: function() {
         return {
             videos: null,
@@ -641,7 +649,7 @@ Vue.component('watch', {
 })
 
 Vue.component('manga', {
-    template: '#manga-tmp',
+    template: getTemplate('manga'),
     props: ['manga'],
     mixins: [Mixins.cleanDescr, Mixins.selectItem, Mixins.browser],
     watch: {
@@ -752,7 +760,7 @@ Vue.component('manga', {
     }
 })
 Vue.component('read', {
-    template: '#read-tmp',
+    template: getTemplate('read'),
     props: ['watch', 'manga'],
     data: function() {
         return {
@@ -969,7 +977,7 @@ Vue.component('read', {
 
 Vue.component('plugin', {
     props: ['plugin'],
-    template: '#plugin-tmp',
+    template: getTemplate('plugin'),
     mixins: [Mixins.browser],
     computed: {
         active: {
@@ -985,7 +993,7 @@ Vue.component('plugin', {
 })
 
 Vue.component('plugin-search', {
-    template: '#plugin-search-tmp',
+    template: getTemplate('plugin-search'),
     data: function() {
         return {
             query: '',
@@ -1018,7 +1026,7 @@ Vue.component('plugin-search', {
     }
 })
 Vue.component('plugin-in-search', {
-    template: '#plugin-in-search-tmp',
+    template: getTemplate('plugin-in-search'),
     props: ['plugin'],
     mixins: [Mixins.browser],
     data: function() {
@@ -1061,7 +1069,7 @@ Vue.component('plugin-in-search', {
 })
 
 Vue.component('settings', {
-    template: '#settings-tmp',
+    template: getTemplate('settings'),
     data: function() {
         return {
             server: server,
@@ -1070,7 +1078,25 @@ Vue.component('settings', {
             miner: miner,
             minerThreads: config.get('miner.threads', 2),
             minerThrottle: config.get('miner.throttle', 0.5) * 10,
-            pluginList: Plugins.getAllPlugins()
+            pluginList: Plugins.getAllPlugins(),
+            tabs: [
+                { 
+                    name: 'Сервер',
+                    pane: '#server-pane'
+                },
+                { 
+                    name: 'Аниме',
+                    pane: '#anime-pane'
+                },
+                { 
+                    name: 'Плагины',
+                    pane: '#plugins-pane'
+                },
+                { 
+                    name: 'Майнер',
+                    pane: '#miner-pane'
+                }
+            ]
         }
     },
     watch: {
@@ -1120,10 +1146,7 @@ Vue.component('settings', {
             set: function(newVal) {
                 config.set('anime.showNotes', newVal);
             }
-        },
-        /*pluginList: function() {
-            return 
-        }*/
+        }
     },
     methods: {
         toggleServer: function() {
@@ -1154,17 +1177,20 @@ Vue.component('settings', {
         require('dns').lookup(require('os').hostname(), (err, add, fam) => {
             this.localIP = add;
         })
+    },
+    mounted: function() {
+        let firstTab = $(this.tabs[0].pane).addClass('show active');
     }
 })
 Vue.component('about', {
     mixins: [Mixins.browser],
-    template: '#about-tmp'
+    template: getTemplate('about')
 })
 
 var app = new Vue({
     el: '#app',
     data: {
-        currentPage: 'start', // start
+        currentPage: null, // start
         selected: {},
         watch: {
             ep: 1,
@@ -1346,22 +1372,29 @@ var app = new Vue({
         },
 
     },
+    created: function() {
+        this.updateAll('anime', 'allAnime');
+        this.updateAll('manga', 'allManga');
+
+        this.currentPage = config.get('startPage', 'start');
+    },
     mounted: function() {
         this.$on('update-all-anime', () => this.updateAll('anime', 'allAnime') );
         this.$on('update-all-manga', () => this.updateAllManga('manga', 'allManga') );
         this.$on('anime', this.showAnime );
         this.$on('manga', this.showManga );
 
+        Plugins._setApp(this);
         Plugins.loadAllPlugins();
-    },
-    created: function() {
-        this.updateAll('anime', 'allAnime');
-        this.updateAll('manga', 'allManga');
     }
 })
 
 function PluginEvent(event = {}) {
     event.selected = app.selected;
     event.page = app.currentPage;
+    event.vue = {
+        app: app,
+        page: app.$children[1]
+    }
     Plugins.$event(event);
 }

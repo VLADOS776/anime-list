@@ -6,19 +6,19 @@ const path = require('path'),
 
 const config = require('./js/config');
 
-const allowedDependencies = ['request', 'cheerio', 'db', 'server', 'log', 'adblock', 'fuse', 'fs'],
-    dependenciesPath = {
+const dependenciesPath = {
         'db': path.join(__dirname, '/js/db.js'),
         'log': path.join(__dirname, '/js/log.js'),
         'server': path.join(__dirname, '/server.js'),
         'adblock': path.join(__dirname, '../scripts', 'adblock.js'),
-        'fuse': path.join(__dirname, 'js', 'libs', 'fuse.js')
+        'fuse': path.join(__dirname, 'js', 'libs', 'fuse.js'),
+        'vue': path.join(__dirname, 'js', 'libs', 'vue.js')
     }
-let pluginList = [];
+let pluginList = [],
+    vueApp = null;
 
 function Plugin() {
-    this.version = '1.0.0';
-    this.allowedDependencies = allowedDependencies;
+    this.version = '1.1';
 }
 
 /**
@@ -64,6 +64,8 @@ Plugin.prototype.newPlugin = function(opt = {}, plug) {
     if (Array.isArray(opt.dependencies)) {
         sendToPlug.dependencies = loadDep(opt.dependencies);
     }
+
+    sendToPlug.app = vueApp;
 
     pluginList.push({
         name: opt.name,
@@ -135,7 +137,10 @@ Plugin.prototype.loadAllPlugins = function() {
     })
 
     pluginFiles.forEach((file) => {
-        require(path.join(file))(PluginManager);
+        require(file)(PluginManager, {
+            dir: path.dirname(file),
+            file: file
+        });
     })
 }
 
@@ -188,16 +193,18 @@ Plugin.prototype._download = function(owner, repo) {
     })
 }
 
+Plugin.prototype._setApp = function(app) {
+    vueApp = app;
+}
+
 function loadDep(depList) {
     let plugDep = {};
     try {
         depList.forEach((element) => {
-            if (allowedDependencies.indexOf(element) !== -1) {
-                if (dependenciesPath[element]) {
-                    plugDep[element] = require(dependenciesPath[element]);
-                } else {
-                    plugDep[element] = require(element);
-                }
+            if (dependenciesPath[element]) {
+                plugDep[element] = require(dependenciesPath[element]);
+            } else {
+                plugDep[element] = require(element);
             }
         });
     } catch (e) {}

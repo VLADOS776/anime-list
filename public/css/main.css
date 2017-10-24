@@ -208,56 +208,56 @@ input:checked + .slider:before {
   .card:hover {
     color: #fff; }
 
-.anime .info .left-side, .manga .info .left-side {
+.anime .info .left-side, .manga .info .left-side, .info-style .info .left-side {
   position: relative; }
-  .anime .info .left-side img.thumb, .manga .info .left-side img.thumb {
+  .anime .info .left-side img.thumb, .manga .info .left-side img.thumb, .info-style .info .left-side img.thumb {
     margin-right: 10px;
     box-shadow: 4px 13px 40px rgba(0, 0, 0, 0.75);
     max-width: 225px; }
-.anime .info .right-side, .manga .info .right-side {
+.anime .info .right-side, .manga .info .right-side, .info-style .info .right-side {
   flex-grow: 2;
   position: relative; }
-  .anime .info .right-side .studios, .manga .info .right-side .studios {
+  .anime .info .right-side .studios, .manga .info .right-side .studios, .info-style .info .right-side .studios {
     position: absolute;
     right: 1rem;
     top: 0; }
-    .anime .info .right-side .studios .studio, .manga .info .right-side .studios .studio {
+    .anime .info .right-side .studios .studio, .manga .info .right-side .studios .studio, .info-style .info .right-side .studios .studio {
       max-width: 160px;
       display: block;
       max-height: 100px; }
-  .anime .info .right-side h6, .manga .info .right-side h6 {
+  .anime .info .right-side h6, .manga .info .right-side h6, .info-style .info .right-side h6 {
     margin-top: -6px; }
-  .anime .info .right-side .genre, .manga .info .right-side .genre {
+  .anime .info .right-side .genre, .manga .info .right-side .genre, .info-style .info .right-side .genre {
     cursor: pointer;
     color: #a3a3a3;
     font-size: 0.95em; }
-    .anime .info .right-side .genre:not(:last-child):after, .manga .info .right-side .genre:not(:last-child):after {
+    .anime .info .right-side .genre:not(:last-child):after, .manga .info .right-side .genre:not(:last-child):after, .info-style .info .right-side .genre:not(:last-child):after {
       content: ', '; }
-  .anime .info .right-side .buttons > .btn, .manga .info .right-side .buttons > .btn {
+  .anime .info .right-side .buttons > .btn, .manga .info .right-side .buttons > .btn, .info-style .info .right-side .buttons > .btn {
     margin-top: 0.5rem; }
-.anime .external_links a, .manga .external_links a {
+.anime .external_links a, .manga .external_links a, .info-style .external_links a {
   padding: 2px 10px;
   border-radius: 4px;
   color: #d6d6d6;
   border: 1px solid #c4c4c4; }
-  .anime .external_links a:hover, .manga .external_links a:hover {
+  .anime .external_links a:hover, .manga .external_links a:hover, .info-style .external_links a:hover {
     background: #FCE397;
     border-color: #FCE397;
     color: #3d3d3d;
     text-decoration: none; }
-.anime ul.notes, .manga ul.notes {
+.anime ul.notes, .manga ul.notes, .info-style ul.notes {
   list-style: none; }
-.anime .related, .manga .related {
+.anime .related, .manga .related, .info-style .related {
   column-count: 2; }
-  .anime .related > div, .manga .related > div {
+  .anime .related > div, .manga .related > div, .info-style .related > div {
     margin: 10px; }
-    .anime .related > div .img-wrap, .manga .related > div .img-wrap {
+    .anime .related > div .img-wrap, .manga .related > div .img-wrap, .info-style .related > div .img-wrap {
       margin-right: 10px; }
-    .anime .related > div h6, .manga .related > div h6 {
+    .anime .related > div h6, .manga .related > div h6, .info-style .related > div h6 {
       font-size: 1rem; }
-    .anime .related > div div, .manga .related > div div {
+    .anime .related > div div, .manga .related > div div, .info-style .related > div div {
       font-size: 0.9rem; }
-  .anime .related > .anime .img-wrap, .anime .related > .anime h6, .anime .related .manga .img-wrap, .anime .related .manga h6, .manga .related > .anime .img-wrap, .manga .related > .anime h6, .manga .related .manga .img-wrap, .manga .related .manga h6 {
+  .anime .related > .anime .img-wrap, .anime .related > .anime h6, .anime .related .manga .img-wrap, .anime .related .manga h6, .manga .related > .anime .img-wrap, .manga .related > .anime h6, .manga .related .manga .img-wrap, .manga .related .manga h6, .info-style .related > .anime .img-wrap, .info-style .related > .anime h6, .info-style .related .manga .img-wrap, .info-style .related .manga h6 {
     cursor: pointer; }
 
 .navbar {
@@ -359,13 +359,13 @@ body.overflow {
       max-width: 800px;
       max-height: 100%; }
 
-.watch {
+.watch, .watch-style {
   /* ╨б╤Г╨▒╤В╨╕╤В╤А╤Л ╤Г ╨▓╨╕╨┤╨╡╨╛ */ }
-  .watch .player-contaier {
+  .watch .player-contaier, .watch-style .player-contaier {
     max-height: 625px;
     position: relative;
     overflow: visible; }
-    .watch .player-contaier:after {
+    .watch .player-contaier:after, .watch-style .player-contaier:after {
       content: '';
       position: absolute;
       z-index: -2;
@@ -375,22 +375,22 @@ body.overflow {
       right: 10px;
       border-radius: 100%;
       height: 20px; }
-  .watch .video-variants {
+  .watch .video-variants, .watch-style .video-variants {
     padding: 0; }
-    .watch .video-variants .card {
+    .watch .video-variants .card, .watch-style .video-variants .card {
       background-color: rgba(0, 0, 0, 0.2); }
-      .watch .video-variants .card .nav-tabs {
+      .watch .video-variants .card .nav-tabs, .watch-style .video-variants .card .nav-tabs {
         justify-content: space-between; }
-        .watch .video-variants .card .nav-tabs .nav-item a {
+        .watch .video-variants .card .nav-tabs .nav-item a, .watch-style .video-variants .card .nav-tabs .nav-item a {
           color: #fff; }
-          .watch .video-variants .card .nav-tabs .nav-item a.active, .watch .video-variants .card .nav-tabs .nav-item a:hover {
+          .watch .video-variants .card .nav-tabs .nav-item a.active, .watch .video-variants .card .nav-tabs .nav-item a:hover, .watch-style .video-variants .card .nav-tabs .nav-item a.active, .watch-style .video-variants .card .nav-tabs .nav-item a:hover {
             background-color: rgba(0, 0, 0, 0.3);
             color: #FCE397;
             border-color: transparent;
             border-bottom: 2px solid #FCE397; }
-          .watch .video-variants .card .nav-tabs .nav-item a:hover {
+          .watch .video-variants .card .nav-tabs .nav-item a:hover, .watch-style .video-variants .card .nav-tabs .nav-item a:hover {
             color: #b3b3b3; }
-      .watch .video-variants .card .video-players {
+      .watch .video-variants .card .video-players, .watch-style .video-variants .card .video-players {
         list-style: none;
         line-height: 1.4rem;
         padding: 0;
@@ -398,65 +398,65 @@ body.overflow {
         max-height: 312px;
         overflow-y: auto; }
         @media (max-width: 1200px) {
-          .watch .video-variants .card .video-players {
+          .watch .video-variants .card .video-players, .watch-style .video-variants .card .video-players {
             max-height: 243px; } }
-        .watch .video-variants .card .video-players li {
+        .watch .video-variants .card .video-players li, .watch-style .video-variants .card .video-players li {
           padding: 2px;
           padding-left: 10px;
           cursor: pointer;
           font-size: 0.9rem;
           word-break: break-all; }
-          .watch .video-variants .card .video-players li.active, .watch .video-variants .card .video-players li.selected {
+          .watch .video-variants .card .video-players li.active, .watch .video-variants .card .video-players li.selected, .watch-style .video-variants .card .video-players li.active, .watch-style .video-variants .card .video-players li.selected {
             background-color: #FCE397;
             color: #282C2F; }
-            .watch .video-variants .card .video-players li.active a, .watch .video-variants .card .video-players li.selected a {
+            .watch .video-variants .card .video-players li.active a, .watch .video-variants .card .video-players li.selected a, .watch-style .video-variants .card .video-players li.active a, .watch-style .video-variants .card .video-players li.selected a {
               color: #282C2F; }
-          .watch .video-variants .card .video-players li:hover, .watch .video-variants .card .video-players li a:hover {
+          .watch .video-variants .card .video-players li:hover, .watch .video-variants .card .video-players li a:hover, .watch-style .video-variants .card .video-players li:hover, .watch-style .video-variants .card .video-players li a:hover {
             background-color: #fdf0c9;
             color: #282C2F;
             text-decoration: none; }
-          .watch .video-variants .card .video-players li .hosting {
+          .watch .video-variants .card .video-players li .hosting, .watch-style .video-variants .card .video-players li .hosting {
             font-size: 0.7rem;
             color: #828282;
             white-space: nowrap;
             text-align: right; }
-          .watch .video-variants .card .video-players li.eng:after {
+          .watch .video-variants .card .video-players li.eng:after, .watch-style .video-variants .card .video-players li.eng:after {
             content: 'English';
             margin-right: 5px;
             font-size: 0.7rem;
             float: right;
             vertical-align: middle;
             color: #97cdfc; }
-          .watch .video-variants .card .video-players li a {
+          .watch .video-variants .card .video-players li a, .watch-style .video-variants .card .video-players li a {
             color: #fff;
             text-decoration: none; }
-        .watch .video-variants .card .video-players::-webkit-scrollbar-thumb {
+        .watch .video-variants .card .video-players::-webkit-scrollbar-thumb, .watch-style .video-variants .card .video-players::-webkit-scrollbar-thumb {
           background: #FCE397;
           -webkit-border-radius: 10px; }
-        .watch .video-variants .card .video-players::-webkit-scrollbar-track {
+        .watch .video-variants .card .video-players::-webkit-scrollbar-track, .watch-style .video-variants .card .video-players::-webkit-scrollbar-track {
           -webkit-box-shadow: inset 0 0 6px #a7a7a7;
           -webkit-border-radius: 10px;
           /* margin: 10px 0; */ }
-        .watch .video-variants .card .video-players::-webkit-scrollbar {
+        .watch .video-variants .card .video-players::-webkit-scrollbar, .watch-style .video-variants .card .video-players::-webkit-scrollbar {
           width: 5px; }
-  .watch #select-ep {
+  .watch #select-ep, .watch-style #select-ep {
     margin-top: 1rem; }
-  .watch ::cue {
+  .watch ::cue, .watch-style ::cue {
     background: transparent;
     text-shadow: #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px, #000 0px 0px 2px;
     font-family: Tahoma;
     font-weight: bold; }
 
-.read .imgWrap img {
+.read .imgWrap img, .read-style .imgWrap img {
   max-width: 100%;
   margin: 0 auto;
   display: block; }
-.read .select-chapter--wrap {
+.read .select-chapter--wrap, .read-style .select-chapter--wrap {
   padding: 0 10px; }
-.read .select-wrap {
+.read .select-wrap, .read-style .select-wrap {
   min-width: 210px;
   text-align: center; }
-  .read .select-wrap .select-page {
+  .read .select-wrap .select-page, .read-style .select-wrap .select-page {
     max-width: 70px;
     display: inline-block; }
 

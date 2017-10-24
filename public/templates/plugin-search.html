@@ -1,0 +1,10 @@
+<div class="plugin-search">
+    <input type="text" class="form-control" v-model="query" placeholder="Поиск плагинов (только на английском)...">
+    <div class='load-spinner' v-if="loading"></div>
+    <div v-if='result'>
+        <p>Найдено: {{result.total_count}}</p>
+        <div class="result">
+            <plugin-in-search v-for='plugin in result.items' :plugin='plugin'></plugin-in-search>
+        </div>
+    </div>
+</div>

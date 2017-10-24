@@ -62,6 +62,28 @@ function set(dbName, animeId, set, callback) {
     })
 }
 
+// TODO: Добавить функцию для создания дополнительный баз данных для плагинов.
+
+// ====== Для плагинов ======
+
+/**
+ * Загружает базу данных
+ * @param {string} name - имя базы данных
+ * @returns {Promise} - Промис, который возвращает экземпляр базы данных
+ */
+module.exports.load = function(name) {
+    return new Promise((res, rej) => {
+        let base = new Datastore({ filename: path.join(dbDirPath, name + '.db'), timestampData: true });
+        base.loadDatabase(function(err) {
+            if (err) {
+                rej(err);
+            } else {
+                res(base);
+            }
+        })
+    })
+}
+
 // ====== Anime ======
 
 module.exports.anime = {};

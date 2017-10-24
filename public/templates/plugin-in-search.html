@@ -1,0 +1,13 @@
+<div class="plugin row mb-3">
+    <div class="col-sm-10">
+        <h5>{{fixedName}}</h5>
+        <p class="plugin__author text-muted">{{plugin.owner.login}} | <a href="#" @click="browser(plugin.html_url)">repo</a></p>
+        <p>{{plugin.description}}</p>
+    </div>
+    <div class="col-sm-2 text-center">
+        <button class="btn btn-outline-success" @click="download" v-if="!installed && !installing">Установить</button>
+        <div class="load-spinner" v-if='installing'></div>
+        <div v-if='installed'>Уже установлено</div>
+        <button class="btn btn-sm" onclick='location.reload()' v-if='showRefresh'>Перезагрузить</button>
+    </div>
+</div>
