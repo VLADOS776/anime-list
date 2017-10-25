@@ -3,7 +3,7 @@
     <div v-if='result'>
         <p>Найдено: {{result.length}}</p>
         <div class="result">
-            <plugin-in-search v-for='plugin in result' :plugin='plugin'></plugin-in-search>
+            <plugin-in-search v-for='plugin in result' :plugin='plugin' :key='plugin.id'></plugin-in-search>
         </div>
     </div>
 </div>

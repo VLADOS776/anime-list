@@ -1054,11 +1054,10 @@ Vue.component('plugin-search', {
 Vue.component('plugin-in-search', {
     template: getTemplate('plugin-in-search'),
     props: ['plugin'],
-    mixins: [Mixins.browser],
     data: function() {
         return {
             installing: false,
-            installed: false,
+            installed: Plugins.hasPlugin({ id: this.plugin.id }),
             showRefresh: false,
             error: null
         }
@@ -1076,23 +1075,6 @@ Vue.component('plugin-in-search', {
                 this.installed = false;
                 this.error = err;
             })
-            /*let owner = this.plugin.full_name.split('/')[0],
-                repo = this.plugin.full_name.split('/')[1];
-            this.installing = true;
-            Plugins._download(owner, repo).then(_ => {
-                this.installing = false;
-                this.installed = true;
-                this.showRefresh = true;
-            }).catch(err => {
-                this.installed = false;
-                this.installing = false;
-                this.error = err;
-            }) */
-        }
-    },
-    mounted: function() {
-        if (Plugins.hasPlugin({ id: this.plugin.id })) {
-            this.installed = true;
         }
     }
 })

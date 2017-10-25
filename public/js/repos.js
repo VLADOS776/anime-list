@@ -43,7 +43,7 @@ module.exports.search = function(query) {
     return fuse.search(query);
 }
 
-module.exports.getRepoInfo = function(link) {
+module.exports.getRepo = function(link) {
     return new Promise((res, rej) => {
         request.get({ url: link }, (err, response, body) => {
             if (err) {
@@ -54,16 +54,11 @@ module.exports.getRepoInfo = function(link) {
             try {
                 let repo = JSON.parse(body);
 
-                if (repo.repo) {
-                    let info = repo.repo;
-                    info.link = link;
-                    res(info)
+                if (repo.repo && repo.plugins) {
+                    repo.repo.link = link;
+                    res(repo)
                 } else {
-                    res({
-                        name: "Undefined",
-                        description: link,
-                        link: link
-                    })
+                    rej('Нет информации об репозитории или нет списка плагинов.')
                 }
             } catch (e) {
                 rej(e);
@@ -79,16 +74,18 @@ module.exports.getAllReposInfo = function() {
 module.exports.addRepo = function(link) {
     return new Promise((res, rej) => {
         if (module.exports.hasRepo(link)) {
-            rej('Этот репозиторий уже есть в списке.')
+            rej('Этот репозиторий уже есть в списке.');
+            return;
         }
-        module.exports.getRepoInfo(link)
-            .then(function(repoInfo) {
+        module.exports.getRepo(link)
+            .then(function(repo) {
                 let allRepos = config.get('repo_list', [defaultRepo]);
     
-                allRepos.push(repoInfo);
+                allRepos.push(repo.repo);
                 config.set('repo_list', allRepos);
 
-                res(repoInfo);
+                ReposPlugins = ReposPlugins.concat(repo.plugins);
+                res(repo);
             })
             .catch(err => {
                 rej(err);
@@ -102,8 +99,12 @@ module.exports.remove = function(link) {
 
     if (repo != -1) {
         allRepos.splice(repo, 1);
-
         config.set('repo_list', allRepos);
+
+        for (let i = ReposPlugins.length - 1; i >= 0; i--) {
+            if (ReposPlugins[i].repo.link === link)
+                ReposPlugins.splice(i, 1);
+        }
         return true;
     } else {
         return false;

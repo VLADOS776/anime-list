@@ -12,7 +12,6 @@
         <template v-if='hasUpdate'>
             <div v-if='newVersion.updateProgram' class='text-danger'>Обновите программу до версии {{newVersion['min-version']}}</div>
             <button class="btn btn-outline-success btn-sm btn-block" @click='update' v-else>Обновить</button>
-
         </template>
         <button class="btn btn-outline-warning btn-sm btn-block" onclick="location.reload()" v-b-tooltip.hover.auto.bottom title='Перезагрузить программу, чтобы изменения вступили в силу' v-if='showRefresh'><i class="fa fa-refresh mr-0" aria-hidden="true"></i></button>        
     </div>
