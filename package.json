@@ -1,6 +1,6 @@
 {
   "name": "animelist",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "main": "index.js",
   "description": "Программа для просмотра аниме и чтения манги.",
   "author": {
@@ -22,13 +22,14 @@
     "ass-to-vtt": "^1.1.1",
     "body-parser": "^1.18.2",
     "cheerio": "^1.0.0-rc.2",
-    "download-github-release": "^0.3.1",
+    "compare-versions": "^3.1.0",
     "express": "^4.16.1",
     "nedb": "^1.8.0",
     "node-shikimori": "^1.0.2",
     "pug": "^2.0.0-rc.4",
     "request": "^2.82.0",
     "srt-to-vtt": "^1.1.1",
+    "unzip": "^0.1.11",
     "vue-scrollto": "^2.7.8",
     "vue-shortkey": "^3.0.2",
     "winston": "^2.3.1",

@@ -2,7 +2,7 @@ const path = require('path'),
     fs = require('fs'),
     app = require('electron').remote.app,
     request = require('request'),
-    downloadRelease = require('download-github-release');
+    repos = require('./js/repos');
 
 const config = require('./js/config');
 
@@ -83,6 +83,7 @@ Plugin.prototype.newPlugin = function(opt = {}, plug) {
  * Проверка на наличие плагина
  * @param {Object} params - Параметры
  * @param {string} [params.name] - Название плагина
+ * @param {string} [params.id] - id плагина
  * @param {string} [params.version] - Версия плагина
  * @param {string} [params.repo] - Ссылка на репозиторий
  * @returns {boolean}
@@ -148,49 +149,8 @@ Plugin.prototype.pluginsDir = function() {
     return path.join(app.getPath('userData'), 'plugins');
 }
 
-Plugin.prototype.search = function(query='') {
-    query = 'al3.0-plugin+' + query.replace(/\s/g, '+');
-    
-    return new Promise((res, rej) => {
-        let options = {
-            url: 'https://api.github.com/search/repositories?q=' + query,
-            headers: {
-                'User-Agent': 'Anime List 3.0'
-            }
-        }
-
-        request(options, function(err, response, body) {
-            if (err) {
-                console.error(err);
-                rej(err);
-                return
-            }
-
-            let answer = JSON.parse(body);
-            res(answer);
-        })
-    })
-}
-
-Plugin.prototype._download = function(owner, repo) {
-    return new Promise((resolve, reject) => {
-        function filterRelease(release) {
-            // Filter out prereleases.
-            return release.prerelease === false;
-        }
-        
-        // Define a function to filter assets.
-        function filterAsset(asset) {
-            // Select assets that contain the string 'windows'.
-            return asset.name.match(/\.zip$/);
-        }
-
-        downloadRelease(owner, repo, this.pluginsDir(), filterRelease, filterAsset, false)
-        .then(function() {
-            resolve(true);
-        })
-        .catch(err => reject(err)); 
-    })
+Plugin.prototype.hasUpdate = function(id) {
+    return repos.updates().filter(el => el.id == id);
 }
 
 Plugin.prototype._setApp = function(app) {

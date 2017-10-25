@@ -1,13 +1,19 @@
 <div class='row mb-4 plugin'>
     <div class='col-sm-10'>
         <h5 class='plugin__name'>{{plugin.name}} <small class='plugin__version'>v{{plugin.version}}</small></h5>
-        <small class='plugin__author text-muted'>{{plugin.opt.author}}<span v-if="plugin.opt.repo"> | <a href="#" @click="browser(plugin.opt.repo)">repo</a></span></small>
+        <small class='plugin__author text-muted'>{{plugin.opt.author}}</small>
         <div class='plugin__description'>{{plugin.opt.description}}</div>
     </div>
-    <div class="col-sm-2">
+    <div class="col-sm-2 text-center">
         <label class="switch">
             <input type="checkbox" v-model='active'>
             <span class="slider round"></span>
         </label>
+        <template v-if='hasUpdate'>
+            <div v-if='newVersion.updateProgram' class='text-danger'>Обновите программу до версии {{newVersion['min-version']}}</div>
+            <button class="btn btn-outline-success btn-sm btn-block" @click='update' v-else>Обновить</button>
+
+        </template>
+        <button class="btn btn-outline-warning btn-sm btn-block" onclick="location.reload()" v-b-tooltip.hover.auto.bottom title='Перезагрузить программу, чтобы изменения вступили в силу' v-if='showRefresh'><i class="fa fa-refresh mr-0" aria-hidden="true"></i></button>        
     </div>
 </div>

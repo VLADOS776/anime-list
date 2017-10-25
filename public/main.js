@@ -12,14 +12,16 @@ var Vue = require('./js/libs/vue.js'),
     online = require('./js/online'),
     shikimori = require('./js/shikimoriInfo'),
     {anime: animeInfo, manga: mangaInfo} = require('./js/shikimoriInfo'),
-    subtitles = require('./js/subtitles');
+    subtitles = require('./js/subtitles'),
+    repos = require('./js/repos');
 
 var onlineManga = require('./js/onlineManga.js');
 
 const log = require('./js/log'),
       config = require('./js/config'),
       miner = require('./miner'),
-      Plugins = require('./plugin');
+      Plugins = require('./plugin'),
+      emitter = require('./emitter');
 
 const server = require('./server');
 
@@ -243,6 +245,16 @@ Vue.component('top-bar', {
                 require('electron').remote.getCurrentWindow().toggleDevTools();
             }
         }
+    },
+    mounted: function() {
+        emitter.global.on('plugins-update-checked', data => {
+            if (repos.updates().length > 0) {
+                this.nav.forEach((item, index) => {
+                    if (item.page === 'settings')
+                        this.$set(this.nav[index], 'badge', repos.updates().length);
+                })
+            }
+        })
     }
 })
 
@@ -979,6 +991,13 @@ Vue.component('plugin', {
     props: ['plugin'],
     template: getTemplate('plugin'),
     mixins: [Mixins.browser],
+    data: function() {
+        return {
+            hasUpdate: false,
+            showRefresh: false,
+            newVersion: null
+        }
+    },
     computed: {
         active: {
             get: function() {
@@ -989,6 +1008,24 @@ Vue.component('plugin', {
                 config.set('plugins.' + this.plugin.id + '.active', val);
             }
         }
+    },
+    methods: {
+        update: function() {
+            repos.downloadPlugin(this.newVersion)
+            .then(_ => {
+                this.hasUpdate = false;
+                this.showRefresh = true;
+            })
+            .catch(err => {
+            });
+        }
+    },
+    mounted: function() {
+        let update = Plugins.hasUpdate(this.plugin.id);
+        if (update.length > 0) {
+            this.hasUpdate = true;
+            this.newVersion = update[0];
+        }
     }
 })
 
@@ -997,9 +1034,7 @@ Vue.component('plugin-search', {
     data: function() {
         return {
             query: '',
-            result: '',
-            loading: false,
-            timer: null
+            result: []
         }
     },
     watch: {
@@ -1009,16 +1044,7 @@ Vue.component('plugin-search', {
     },
     methods: {
         search: function(query) {
-            if (this.timer) clearTimeout(this.timer);
-            this.loading = false;
-            
-            this.timer = setTimeout(() => {
-                this.loading = true;
-                Plugins.search(query).then((results) => {
-                    this.loading = false;
-                    this.result = results;
-                })
-            }, 1000);
+            this.result = repos.search(query)
         }
     },
     mounted: function() {
@@ -1037,17 +1063,20 @@ Vue.component('plugin-in-search', {
             error: null
         }
     },
-    computed: {
-        fixedName: function() {
-            return this.plugin.name.replace(/^al3.0-plugin/i, '')
-                                    .replace(/---/g, ' - ')
-                                    .replace(/(\w|\d|_|^)-(\w|\d|$)/g, '$1 $2')
-                                    .trim();
-        }
-    },
     methods: {
         download: function() {
-            let owner = this.plugin.full_name.split('/')[0],
+            this.installign = true;
+            repos.downloadPlugin(this.plugin).then(_ => {
+                this.installing = false;
+                this.installed = true;
+                this.showRefresh = true;
+            })
+            .catch(err => {
+                this.installing = false;
+                this.installed = false;
+                this.error = err;
+            })
+            /*let owner = this.plugin.full_name.split('/')[0],
                 repo = this.plugin.full_name.split('/')[1];
             this.installing = true;
             Plugins._download(owner, repo).then(_ => {
@@ -1058,13 +1087,60 @@ Vue.component('plugin-in-search', {
                 this.installed = false;
                 this.installing = false;
                 this.error = err;
-            }) 
+            }) */
         }
     },
     mounted: function() {
-        if (Plugins.hasPlugin({ repo: this.plugin.html_url })) {
+        if (Plugins.hasPlugin({ id: this.plugin.id })) {
             this.installed = true;
         }
+    }
+})
+Vue.component('repos', {
+    template: getTemplate('repos'),
+    data: function() {
+        return {
+            reposInfo: [],
+            error: null,
+            repoUrl: '',
+            allRepos: []
+        }
+    },
+    methods: {
+        modalShown: function() {
+            this.repoUrl = '';
+            this.$refs.url.focus();
+        },
+        handleOk: function(evt) {
+            evt.preventDefault();
+            if (this.repoUrl) {
+                this.submit()
+            }
+        },
+        submit: function() {
+            this.$refs.modal.hide();
+            repos.addRepo(this.repoUrl)
+                .then((repo) => {
+                    this.updateRepos();
+                })
+                .catch(err => {
+                    if (err) {
+                        this.error = err;
+                    }
+                });
+            this.repoUrl = '';
+        },
+        updateRepos: function() {
+            this.allRepos = repos.getAllReposInfo();
+        },
+        remove: function(link) {
+            repos.remove(link);
+
+            this.updateRepos();
+        }
+    },
+    mounted: function() {
+        this.updateRepos();
     }
 })
 
@@ -1180,6 +1256,13 @@ Vue.component('settings', {
     },
     mounted: function() {
         let firstTab = $(this.tabs[0].pane).addClass('show active');
+
+        if (repos.updates().length > 0) {
+            this.tabs.forEach((item, index) => {
+                if (item.pane === '#plugins-pane')
+                    this.$set(this.tabs[index], 'badge', repos.updates().length);
+            })
+        }
     }
 })
 Vue.component('about', {
