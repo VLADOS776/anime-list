@@ -1,19 +1,25 @@
 <div class="start">
-    <template v-if="watching && watching.length">
-        <h4>Смотрю</h4>
-        <div class="watching d-flex mb-3 pb-2">
-            <b-card overlay
-                v-for="anime in watching"
-                key="anime.id"
-                :img-src="'https://shikimori.org/' +anime.image.original"
-                :img-alt="anime.name"
-                :title="anime.russian"
-                :sub-title="anime.name"
-                @click="select_anime(anime)">
-                <p class='card-text'>{{anime.watched}} / {{anime.episodes_aired || anime.episodes}}</p>
-            </b-card>
+    <h4>{{selectedHorizontal ? selectedHorizontal.name : ''}} 
+        <span class='dropdown-toggle' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'></span>
+        <div class='dropdown-menu'>
+            <a v-for='item in dropdownHorizontal' href="#" class="dropdown-item" @click='selectedHorizontal = item'>{{item.name}}</a>
         </div>
-    </template>
+    </h4>
+    <div class="watching d-flex mb-3 pb-2" v-if='horisontalList && horisontalList.length'>
+        <b-card overlay
+            v-for="anime in horisontalList"
+            key="anime.id"
+            :img-src="'https://shikimori.org/' +anime.image.original"
+            :img-alt="anime.name"
+            :title="anime.russian"
+            :sub-title="anime.name"
+            @click="select_anime(anime)">
+            <p class='card-text'>{{anime.watched}} / {{anime.episodes_aired || anime.episodes}}</p>
+        </b-card>
+    </div>
+    <div class='mb-3 pb-2' v-else>
+            <p>Здесь пока ничего нет...</p>
+    </div>
     <h4>Избранное аниме</h4>
     <template v-if="all_anime && all_anime.length">
         <div class="cards-wrap">
@@ -21,7 +27,7 @@
                     <b-card overlay
                         v-for="anime in all_anime"
                         key="anime.id"
-                        :img-src="'https://shikimori.org/' +anime.image.original"
+                        :img-src="anime.cover || 'https://shikimori.org/' +anime.image.original"
                         :img-alt="anime.name"
                         :title="anime.russian"
                         :sub-title="anime.name"

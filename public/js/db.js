@@ -67,9 +67,9 @@ function set(dbName, animeId, set, callback) {
 // ====== Для плагинов ======
 
 /**
- * Загружает базу данных
+ * Загружает базу данных. Если такой базы нет - создает её и загружает.
  * @param {string} name - имя базы данных
- * @returns {Promise} - Промис, который возвращает экземпляр базы данных
+ * @returns {Promise} - Промис, который возвращает экземпляр базы данных nedb
  */
 module.exports.load = function(name) {
     return new Promise((res, rej) => {

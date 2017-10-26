@@ -25,12 +25,10 @@ function Plugin() {
  * Отправить событие всем плагинам
  * @param {Object} event - Объект события
  * @param {string} event.type - Тип события
- * @param {string} event.page - Имя страницы, если событие = openPage
- * @param {string} event.selected - Выбранное аниме или манга
  */
 Plugin.prototype.$event = function(event) {
     pluginList.forEach((plugin) => {
-        if (config.get('plugins.' + plugin.id + '.active', true)) {
+        if (config.get('plugins.' + plugin.id.replace(/\./g, '-') + '.active', true)) {
             if (typeof plugin.plug.onEvent === 'function') plugin.plug.onEvent(event);
         }
     })
@@ -41,13 +39,12 @@ Plugin.prototype.$event = function(event) {
  * @param {string} opt.name - Название плагина
  * @param {string} opt.version - Версия плагина
  * @param {string} opt.id - id плагина. Может состоять из цифр, английских букв и знаков "-", "_"
- * @param {string} [opt.repo] - Ссылка на репозиторий плагина
  * @param {string} [opt.description] - Описание плагина
- * @param {string} [opt.autroh] - Автор плагина
+ * @param {string} [opt.author] - Автор плагина
  * @param {string} [opt.dependencies] - Зависимости плагина
  * @param {Object} plug - Объект плагина
- * @param {Function} init - Функция, которая вызывается при загрузке скрипта
- * @param {Function} onEvent - Функция, которая вызывается при каком-то событии
+ * @param {Function} [plug.init] - Функция, которая вызывается при загрузке скрипта
+ * @param {Function} [plug.onEvent] - Функция, которая вызывается при каком-то событии
  */
 Plugin.prototype.newPlugin = function(opt = {}, plug) {
     let sendToPlug = {}
@@ -75,7 +72,7 @@ Plugin.prototype.newPlugin = function(opt = {}, plug) {
         plug: plug
     })
 
-    if (config.get('plugins.' + opt.id + '.active', true)) {
+    if (config.get('plugins.' + opt.id.replace(/\./g, '-') + '.active', true)) {
         if (typeof plug.init === 'function') plug.init(sendToPlug);
     }
 }
@@ -85,7 +82,6 @@ Plugin.prototype.newPlugin = function(opt = {}, plug) {
  * @param {string} [params.name] - Название плагина
  * @param {string} [params.id] - id плагина
  * @param {string} [params.version] - Версия плагина
- * @param {string} [params.repo] - Ссылка на репозиторий
  * @returns {boolean}
  */
 Plugin.prototype.hasPlugin = function(params = {}) {
@@ -109,7 +105,7 @@ Plugin.prototype.getAllPlugins = function() {
 }
 
 /**
- * Загрузить все плагины
+ * Загрузить все плагины. Срабатывает при старте программы
  */
 Plugin.prototype.loadAllPlugins = function() {
     let pluginDirPath = path.join(app.getPath('userData'), 'plugins');
@@ -145,10 +141,19 @@ Plugin.prototype.loadAllPlugins = function() {
     })
 }
 
+/**
+ * Путь до папки с плагинами
+ * @returns {string}
+ */
 Plugin.prototype.pluginsDir = function() {
     return path.join(app.getPath('userData'), 'plugins');
 }
 
+/**
+ * Проверка на наличие обновлений
+ * @param {string} id - ID плагина
+ * @returns {Array} - Массив с плагинами, у которых совпадает id и версия больше, чем у установленного или пустой массив.
+ */
 Plugin.prototype.hasUpdate = function(id) {
     return repos.updates().filter(el => el.id == id);
 }

@@ -30,6 +30,10 @@ function Server() {
 }
 
 util.inherits(Server, EventEmmiter);
+
+/**
+ * Запустить сервер
+ */
 Server.prototype.start = function() {
     app.get('/', (req, res) => {
         if (req.query && req.query.search) {
@@ -134,6 +138,10 @@ Server.prototype.start = function() {
         this.active = true;
     })
 }
+
+/**
+ * Остановить сервер
+ */
 Server.prototype.stop = function() {
     SERVER.close();
     this.active = false;

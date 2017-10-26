@@ -102,12 +102,63 @@ function getTemplate(name) {
 
 Vue.component('start', {
     template: getTemplate('start'),
-    props: ['all_anime', 'watching'],
+    props: ['all_anime'],
     mixins: [Mixins.selectItem],
+    data: function() {
+        return {
+            selectedHorizontal: null,
+            dropdownHorizontal: [
+                { 
+                    name: 'Смотрю',
+                    filter: 'anime.watched < (anime.episodes_aired || anime.episodes)',
+                    sort: 'a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched : a.lastWatched ? -1 : b.lastWatched ? 1 : 0',
+                    limit: 10
+                },
+                { 
+                    name: 'Хочу посмотреть',
+                    filter: '!anime.watched',
+                    sort: 'a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched : a.lastWatched ? -1 : b.lastWatched ? 1 : 0',
+                    limit: 10
+                }
+            ],
+            selectedMain: null,
+            dropdownMain: [
+                {
+                    name: 'Избранное аниме',
+                    list: this.all_anime,
+                    click: 'show_anime'
+                },
+                {
+                    name: 'Избранная манга',
+                    list: this.all_manga,
+                    click: 'show_manga'
+                }
+            ]
+        }
+    },
     computed: {
         all_manga: function() {
             return this.$root.allManga
+        },
+        horisontalList: function() {
+            if (this.selectedHorizontal) {
+                let list = this.all_anime.filter(anime => eval(this.selectedHorizontal.filter));
+                
+                if (this.selectedHorizontal.sort) {
+                    list.sort((a, b) => eval(this.selectedHorizontal.sort));
+                }
+                if (this.selectedHorizontal.limit) {
+                    list.slice(0, this.selectedHorizontal.limit);
+                }
+                return list;
+            } else {
+                return [];
+            }
         }
+    },
+    mounted: function() {
+        this.selectedHorizontal = this.dropdownHorizontal[0];
+        this.selectedMain = this.dropdownMain[0];
     }
 })
 
@@ -226,7 +277,7 @@ Vue.component('top-bar', {
                     
                     self.searchOnline_manga = response;
                 })
-                PluginEvent({ type: 'onlineSearch', query: self.search })
+                PluginEvent({ type: 'search', query: self.search })
             }, 1000)
         },
         start_page: function() {
@@ -1128,6 +1179,7 @@ Vue.component('repos', {
 
 Vue.component('settings', {
     template: getTemplate('settings'),
+    mixins: [Mixins.browser],
     data: function() {
         return {
             server: server,
@@ -1424,18 +1476,6 @@ var app = new Vue({
                 PluginEvent({ type: 'openPage' })
             }, 550)
         }
-    },
-    computed: {
-        watching: function() {
-            return this.allAnime
-                       .filter(anime => anime.watched < (anime.episodes_aired || anime.episodes))
-                       .sort((a, b) =>  a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched : 
-                                        a.lastWatched ? -1 :
-                                        b.lastWatched ? 1 : 
-                                        0)
-                       .slice(0, 10)
-        },
-
     },
     created: function() {
         this.updateAll('anime', 'allAnime');
