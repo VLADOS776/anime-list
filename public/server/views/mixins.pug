@@ -7,9 +7,10 @@ mixin related(relate_list)
         .related
             each relate in relate_list
                 if relate.anime
+                    - var a_query = relate.anime.id ? 'id=' + relate.anime.id : 'name=' + relate.anime.name + '&source=' + relate.anime.source
                     .d-flex.anime
                         .img-wrap
-                            a(href='/anime/' + relate.anime.id)
+                            a(href='/anime?' + a_query)
                                 img(src='https://shikimori.org/'+relate.anime.image.x96, alt='')
                         div
                             h6= relate.anime.russian

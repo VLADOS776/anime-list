@@ -17,3 +17,7 @@ html
         script(src='/js/popper.min.js')
         script(src='/js/bootstrap.min.js')
         script(src='/serverjs/main.js')
+
+        if injected && injected.length
+            each scr in injected
+                script!= `(${scr.toString()})()`

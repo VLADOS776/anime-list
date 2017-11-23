@@ -19,8 +19,13 @@ module.exports.getPlayers = function(animeId, ep, videoId, callback) {
             let $ = cheerio.load(body);
 
             if ($('.error-404').length) {
-                log.error('Online. Error 404.', { animeId: animeId, episode: ep, videoID: videoId })
-                return load('https:' + $('p a').attr('href'), callback);
+                log.error('Online. Error 404.', { animeId: animeId, episode: ep, videoID: videoId });
+                let newLink = $('p a').attr('href');
+                if (newLink !== '/') {
+                    return load('https:' + $('p a').attr('href'), callback);
+                } else {
+                    callback(404);
+                }
             }
 
             let mapFunc = function(i, el) {
@@ -39,9 +44,6 @@ module.exports.getPlayers = function(animeId, ep, videoId, callback) {
                 embed: $('.b-video_player iframe').attr('src'),
                 video_id: $('.b-video_player').data('video_id')
             }
-            /*player.kind = $(`.b-video_variant[data-video_id="${defPlayer.video_id}"]`).eq(0).find('.video-kind').text();
-            player.hosting = $(`.b-video_variant[data-video_id="${defPlayer.video_id}"]`).eq(0).find('.video-hosting').text();
-            player.author = $(`.b-video_variant[data-video_id="${defPlayer.video_id}"]`).eq(0).find('.video-author').text();*/
 
             let fandub = $('.video-variant-group[data-kind="fandub"] .b-video_variant').map(mapFunc),
                 sub = $('.video-variant-group[data-kind="subtitles"] .b-video_variant').map(mapFunc),

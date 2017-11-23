@@ -1,7 +1,8 @@
 const config = require('./js/config'),
       db = require('./js/db'),
       online = require('./js/online'),
-      {anime: animeInfo} = require('./js/shikimoriInfo');
+      {anime: animeInfo} = require('./js/shikimoriInfo'),
+      Sources = require('./sources')
 
 const express = require('express'),
       app = express(),
@@ -31,6 +32,8 @@ function Server() {
 
 util.inherits(Server, EventEmmiter);
 
+let injectedList = [];
+
 /**
  * Запустить сервер
  */
@@ -39,83 +42,130 @@ Server.prototype.start = function() {
         if (req.query && req.query.search) {
             shikimori.client.get('animes', { search: req.query.search, limit: 20 }, function(err, response, body) {
                 if (err) log.error(err);
-                res.render('search', { query: req.query.search, results: response });
+                res.render('search', { query: req.query.search, results: response, injected: injectedList });
             })
         } else {
             db.anime.getAll((animes) => {
-                res.render('index', { animes: animes})
+                res.render('index', { animes: animes, injected: injectedList})
             })
         }
     })
 
-    app.get('/anime/:id', (req, res) => {
-        db.anime.get({ id: parseInt(req.params.id) }, { russian: 1 }, (anime) => {
-            if (anime && anime.length) {
-                related(anime[0]);
-            } else {
-                animeInfo.info(parseInt(req.params.id), (error, anime) => {
-                    if (anime) {
-                        related(anime);
-                    }
-                })
-            }
-        })
+    app.get('/anime', (req, res) => {
+        if (!req.query) {
+            res.redirect('/');
+            return;
+        }
+        let id = req.query.id ? parseInt(req.query.id) : null,
+            name = req.query.name || null,
+            source = req.query.source || null;
+
+        if (name && source) {
+            db.anime.get({ name: name, source: source }, { russian: 1 }, (anime) => {
+                if (anime && anime.length) {
+                    render(anime[0]);
+                }
+            })
+        } else if (id != null) {
+            db.anime.get({ id: id }, { russian: 1 }, (anime) => {
+                if (anime && anime.length) {
+                    related(anime[0]);
+                } else {
+                    animeInfo.info(parseInt(id), (error, anime) => {
+                        if (anime) {
+                            related(anime);
+                        }
+                    })
+                }
+            })
+        } else {
+            res.redirect('/');
+            return;
+        }
 
         function related(anime) {
             animeInfo.related(anime.id, (error, related) => {
-                if (related) {
+                if (related && ! related.code) {
                     anime.related = related;
                 }
                 render(anime);
             })
         }
         function render(anime) {
-            res.render('anime', {anime: anime});
+            res.render('anime', {anime: anime, injected: injectedList});
         }
     })
 
-    app.get('/watch/:id', (req, res) => {
-        db.anime.get({ id: parseInt(req.params.id) }, { russian: 1 }, (anime) => {
-            if (anime && anime.length) {
-                render(anime[0]);
-            } else {
-                animeInfo.info(parseInt(req.params.id), (error, anime) => {
-                    if (anime) {
-                        render(anime);
-                    }
-                })
-            }
-        })
+    app.get('/watch', (req, res) => {
+        if (!req.query) {
+            res.redirect('/');
+            return;
+        }
+
+        let id = req.query.id ? parseInt(req.query.id) : null,
+            name = req.query.name || null,
+            source = req.query.source || null;
+
+        if (id != null) {
+            db.anime.get({ id: id }, { russian: 1 }, (anime) => {
+                if (anime && anime.length) {
+                    render(anime[0]);
+                } else {
+                    animeInfo.info(id, (error, anime) => {
+                        if (anime) {
+                            render(anime);
+                        }
+                    })
+                }
+            })
+        } else if (name && source) {
+            db.anime.get({ name: name, source: source }, { russian: 1 }, (anime) => {
+                if (anime && anime.length) {
+                    render(anime[0]);
+                } else {
+                    res.redirect('/');
+                }
+            })
+        }
 
         function render(anime) {
             anime.availableEp = anime.episodes_aired || anime.episodes;
             let watch = {};
             watch.ep = anime.watched ? anime.watched + 1 : 1;
             if (watch.ep > anime.availableEp) watch.ep = anime.availableEp;
-            watch.videoId = null;
+            watch.video_id = null;
 
             if (req.query.videoId) {
-                watch.videoId = req.query.videoId;
+                watch.video_id = req.query.videoId;
             }
             if (req.query.episode) {
                 watch.ep = parseInt(req.query.episode);
             }
 
-            online.getPlayers(anime.id, watch.ep, watch.videoId, function(vids) {
-                res.render('watch', { anime: anime, watch: watch, videos: vids})
+            Sources.watch({
+                anime: anime,
+                watch: watch,
+                videos: {},
+                videoOnly: false
+            }, (watchObj, err) => {
+                res.render('watch', { anime: anime, watch: watch, videos: watchObj, injected: injectedList })
             })
+
+            /*online.getPlayers(anime.id, watch.ep, watch.videoId, function(vids) {
+                res.render('watch', { anime: anime, watch: watch, videos: vids, injected: injectedList})
+            })*/
         }
     })
     
     app.post('/api/watched', (req, res) => {
-        if (!req.body || !req.body.animeId || !req.body.episode) {
+        if (!req.body || !req.body.query || !req.body.episode) {
             res.end('fail');
             return;
         }
-        let animeId = parseInt(req.body.animeId),
+        let query = req.body.query,
             episode = parseInt(req.body.episode);
 
-        this.emit('watched', { animeId: animeId, episode: episode });
+        this.emit('watched', { query: query, episode: episode });
         res.end('ok');
     })
 
@@ -150,6 +200,11 @@ Server.prototype.app = function() {
     return app;
 }
 
-
+Server.prototype.inject = function(script) {
+    if (typeof script !== 'function') {
+        return 'Parameter must be a function'
+    }
+    injectedList.push(script);
+}
 
 module.exports = new Server();

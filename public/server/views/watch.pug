@@ -1,64 +1,84 @@
 extends layout
 
 block content
+    - var query = anime.id ? 'id=' + anime.id : `name=${anime.name}&source=${anime.source}`
+
     div.watch
         .mb-2
-            a.btn.btn-outline-secondary.btn-sm(href='/anime/' + anime.id)
+            a.btn.btn-outline-secondary.btn-sm(href='/anime?' + query)
                 i.fa.fa-arrow-left(aria-hidden='true')
                 |  Назад
         h3.mb-2= `${anime.russian} [${watch.ep} / ${anime.episodes_aired || anime.episodes }]`
         .row
             .col-lg-8.mb-3
                 .player-contaier.embed-responsive.embed-responsive-16by9
-                    iframe#player.embed-responsive-item(src='http:' + videos.player.embed, frameborder='0', allowfullscreen='')
+                    if videos.player && videos.player.embed
+                        iframe#player.embed-responsive-item(src=(videos.player.embed && videos.player.embed.startsWith('htt') ? videos.player.embed : 'http:' + videos.player.embed), frameborder='0', allowfullscreen='')
+                    else
+                        div#player.embed-responsive-item
+                            p.text-center Плеера нет
             .col-lg-4.video-variants
                 .card
                     div
                         ul.nav.nav-tabs#watchTabs(role='tablist', tabindex='0')
-                            li.nav-item
-                                a.nav-link.active(href='#fandub', role='tab', data-toggle='tab', id='fandub-tab', aria-controls='fandub') Озвучка
-                            li.nav-item
-                                a.nav-link(href='#sub', role='tab', data-toggle='tab', id='sub-tab', aria-controls='sub') Субтитры
-                            li.nav-item
-                                a.nav-link(href='#raw', role='tab', data-toggle='tab', id='raw-tab', aria-controls='raw') Оригинал
+                            if videos.fandub && Object.keys(videos.fandub).length > 0
+                                li.nav-item
+                                    a.nav-link.active(href='#fandub', role='tab', data-toggle='tab', id='fandub-tab', aria-controls='fandub') Озвучка
+                            if videos.sub && Object.keys(videos.sub).length > 0
+                                li.nav-item
+                                    a.nav-link(href='#sub', role='tab', data-toggle='tab', id='sub-tab', aria-controls='sub') Субтитры
+                            if videos.raw && Object.keys(videos.raw).length > 0
+                                li.nav-item
+                                    a.nav-link(href='#raw', role='tab', data-toggle='tab', id='raw-tab', aria-controls='raw') Оригинал
                                 
                     div.tab-content
-                        div.tab-pane.fade.show.active#fandub(role='tabpanel', aria-labelledby="fandub-tab")
-                            ul.video-players.fandub
-                                each video in videos.fandub
-                                    if video.author && video.author.length
-                                        li(class=video.video_id === videos.player.video_id ? 'selected' : '')
-                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?episode=${watch.ep}&videoId=${video.video_id}`)
-                                                span= video.author
-                                                span.hosting= video.hosting
-                        div.tab-pane.fade#sub(role='tabpanel', aria-labelledby="sub-tab")
-                            ul.video-players.sub
-                                each video in videos.sub
-                                    if video.author && video.author.length
-                                        li(class=video.video_id === videos.player.video_id ? 'selected' : '', class=video.kindClass && video.kindClass.indexOf('english') !== -1 ? 'eng' : '')
-                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?episode=${watch.ep}&videoId=${video.video_id}`)
-                                                span= video.author
-                                                span.hosting= video.hosting
-                        div.tab-pane.fade#raw(role='tabpanel', aria-labelledby="raw-tab")
-                            ul.video-players.raw
-                                each video in videos.raw
-                                    if video.author && video.author.length
-                                        li(class=video.video_id === videos.player.video_id ? 'selected' : '')
-                                            a.d-flex.justify-content-between(href=`/watch/${anime.id}?episode=${watch.ep}&videoId=${video.video_id}`)
-                                                span= video.author
-                                                span.hosting= video.hosting
+                        if videos.fandub
+                            div.tab-pane.fade.show.active#fandub(role='tabpanel', aria-labelledby="fandub-tab")
+                                ul.video-players.fandub
+                                    each video in videos.fandub
+                                        if video.author && video.author.length
+                                            li(class=video.video_id === videos.player.video_id ? 'selected' : '')
+                                                a.d-flex.justify-content-between(href=`/watch?${query}&episode=${watch.ep}&videoId=${video.video_id}`)
+                                                    span= video.author
+                                                    span.hosting= video.hosting
+                        if videos.sub
+                            div.tab-pane.fade#sub(role='tabpanel', aria-labelledby="sub-tab")
+                                ul.video-players.sub
+                                    each video in videos.sub
+                                        if video.author && video.author.length
+                                            li(class=video.video_id === videos.player.video_id ? 'selected' : '', class=video.kindClass && video.kindClass.indexOf('english') !== -1 ? 'eng' : '')
+                                                a.d-flex.justify-content-between(href=`/watch?${query}&episode=${watch.ep}&videoId=${video.video_id}`)
+                                                    span= video.author
+                                                    span.hosting= video.hosting
+                        if videos.raw
+                            div.tab-pane.fade#raw(role='tabpanel', aria-labelledby="raw-tab")
+                                ul.video-players.raw
+                                    each video in videos.raw
+                                        if video.author && video.author.length
+                                            li(class=video.video_id === videos.player.video_id ? 'selected' : '')
+                                                a.d-flex.justify-content-between(href=`/watch?${query}&episode=${watch.ep}&videoId=${video.video_id}`)
+                                                    span= video.author
+                                                    span.hosting= video.hosting
                 select#select-ep.form-control
                     - var eps = 1
                     while eps < anime.availableEp + 1
                         option(value=eps, selected=watch.ep === eps)= eps + ' серия'
                         - eps++
         .d-flex.justify-content-between.mt-3
-            - var prevLink = watch.ep === 1 ? '#' : `/watch/${anime.id}?episode=${watch.ep - 1}`
-            - var nextLink = watch.ep === anime.availableEp ? '#' : `/watch/${anime.id}?episode=${watch.ep + 1}`
+            - var prevLink = watch.ep === 1 ? '#' : `/watch?${query}&episode=${watch.ep - 1}`
+            - var nextLink = watch.ep === anime.availableEp ? '#' : `/watch?${query}&episode=${watch.ep + 1}`
             a.btn.btn-outline-warning(href=prevLink, class=watch.ep === 1 ? 'disabled' : '')
                 i.fa.fa-arrow-left(aria-hidden='true')
                 |  Предыдущая серия
-            button#markWatched.btn(class=!anime.watched || watch.ep > anime.watched ? 'btn-outline-info' : 'btn-info', onclick=`markAsWatched(${anime.id}, ${watch.ep})`)
+            -
+                var watchedObj = {};
+                if (anime.id) {
+                    watchedObj.id = anime.id;
+                } else {
+                    watchedObj.name = anime.name;
+                    watchedObj.source = anime.source;
+                }
+            button#markWatched.btn(class=!anime.watched || watch.ep > anime.watched ? 'btn-outline-info' : 'btn-info', onclick=`markAsWatched(${JSON.stringify(watchedObj)}, ${watch.ep})`)
                 i.fa.fa-check(aria-hidden='true')
                 |  Просмотрено
             a.btn.btn-outline-warning(href=nextLink, class=watch.ep === anime.availableEp ? 'disabled' : '')

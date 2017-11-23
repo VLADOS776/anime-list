@@ -6,16 +6,14 @@
         </div>
     </h4>
     <div class="watching d-flex mb-3 pb-2" v-if='horisontalList && horisontalList.length'>
-        <b-card overlay
-            v-for="anime in horisontalList"
-            key="anime.id"
-            :img-src="'https://shikimori.org/' +anime.image.original"
-            :img-alt="anime.name"
-            :title="anime.russian"
-            :sub-title="anime.name"
-            @click="select_anime(anime)">
-            <p class='card-text'>{{anime.watched}} / {{anime.episodes_aired || anime.episodes}}</p>
-        </b-card>
+        <div class="card" v-for='anime in horisontalList' key='anime.russian' @click="select_anime(anime)">
+            <img :src="anime.cover || 'https://shikimori.org/' +anime.image.original" :alt="anime.name" class='card-img' @error='card_error'>
+            <div class="card-body card-img-overlay">
+                <h4 class="card-title">{{anime.russian}}</h4>
+                <h6 class="card-subtitle mb-2 text-muted">{{anime.name}}</h6>
+                <p class="card-text">{{anime.watched}} / {{anime.episodes_aired || anime.episodes}}</p>
+            </div>
+        </div>
     </div>
     <div class='mb-3 pb-2' v-else>
             <p>Здесь пока ничего нет...</p>
@@ -24,15 +22,13 @@
     <template v-if="all_anime && all_anime.length">
         <div class="cards-wrap">
             <b-card-group columns>
-                    <b-card overlay
-                        v-for="anime in all_anime"
-                        key="anime.id"
-                        :img-src="anime.cover || 'https://shikimori.org/' +anime.image.original"
-                        :img-alt="anime.name"
-                        :title="anime.russian"
-                        :sub-title="anime.name"
-                        @click="select_anime(anime)">
-                    </b-card>
+                <div class="card" v-for='anime in all_anime' key='anime.russian' @click="select_anime(anime)">
+                    <img :src="anime.cover || 'https://shikimori.org/' +anime.image.original" :alt="anime.name" class='card-img' @error='card_error'>
+                    <div class="card-body card-img-overlay">
+                        <h4 class="card-title">{{anime.russian}}</h4>
+                        <h6 class="card-subtitle mb-2 text-muted">{{anime.name}}</h6>
+                    </div>
+                </div>
             </b-card-group>
         </div>
     </template>
@@ -43,15 +39,13 @@
     <template v-if="all_manga && all_manga.length">
         <div class="cards-wrap">
             <b-card-group columns>
-                    <b-card overlay
-                        v-for="manga in all_manga"
-                        key="manga.id"
-                        :img-src="'https://shikimori.org/' +manga.image.original"
-                        :img-alt="manga.name"
-                        :title="manga.russian"
-                        :sub-title="manga.name"
-                        @click="select_manga(manga)">
-                    </b-card>
+                <div class="card" v-for='manga in all_manga' key='manga.russian' @click="select_manga(manga)">
+                    <img :src="'https://shikimori.org/' +manga.image.original" :alt="manga.name" class='card-img' @error='card_error'>
+                    <div class="card-body card-img-overlay">
+                        <h4 class="card-title">{{manga.russian}}</h4>
+                        <h6 class="card-subtitle mb-2 text-muted">{{manga.name}}</h6>
+                    </div>
+                </div>
             </b-card-group>
         </div>
     </template>

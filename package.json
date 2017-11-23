@@ -1,6 +1,6 @@
 {
   "name": "animelist",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "main": "index.js",
   "description": "Программа для просмотра аниме и чтения манги.",
   "author": {
@@ -10,19 +10,18 @@
   "homepage": "http://anime-list.clan.su/",
   "scripts": {
     "start": "electron .",
-    "bundle": "browserify --ignore-missing --no-builtins --no-commondir --insert-global-vars=\"global\" -t vueify -e public/js/main.js -o public/js/build.js --no-commondir",
-    "build": "electron-packager . AnimeList --platform=win32 --arch=x64 --out=dist --ignore=dist --asar=true --prune --overwrite --icon=icons/AL.ico",
-    "build-32": "electron-packager . AnimeList --platform=win32 --arch=ia32 --out=dist --asar=true --ignore=dist --prune --overwrite --icon=icons/AL.ico",
-    "build-linux": "electron-packager . AnimeList --platform=linux --arch=x64 --out=dist --asar=true --ignore=dist --prune --overwrite",
+    "debug": "electron --inspect-brk=6646 .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "dist-linux": "electron-builder --linux"
   },
   "dependencies": {
     "ass-to-vtt": "^1.1.1",
+    "async": "^2.5.0",
     "body-parser": "^1.18.2",
     "cheerio": "^1.0.0-rc.2",
     "compare-versions": "^3.1.0",
+    "electron-google-analytics": "0.0.24",
     "express": "^4.16.1",
     "nedb": "^1.8.0",
     "node-shikimori": "^1.0.2",

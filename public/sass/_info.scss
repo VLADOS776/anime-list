@@ -24,6 +24,16 @@
             h6 { 
                 margin-top: -6px;
             }
+            .altNames {
+                list-style: none;
+                padding-left: 0;
+                font-size: 0.95em;
+                margin-bottom: 7px;
+                &__showMore {
+                    padding: 0 6px;
+                    font-weight: bold;
+                }
+            }
             .genre {
                 cursor: pointer;
                 color: $fontColor2;
@@ -35,6 +45,12 @@
             .buttons > .btn {
                 margin-top: 0.5rem;
             }
+        }
+    }
+
+    .description {
+        p {
+            white-space: pre-wrap;
         }
     }
 
@@ -60,6 +76,7 @@
     
     .related {
         column-count: 2;
+        column-width: 9rem;
         & > div {
             margin: 10px;
             .img-wrap {

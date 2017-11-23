@@ -31,31 +31,31 @@
             <div class="col-lg-4 video-variants" v-if='!local'>
                 <b-card no-body>
                     <b-tabs ref="tabs">
-                        <b-tab title="Озвучка" active>
+                        <b-tab title="Озвучка"  v-if='videos.fandub && videos.fandub.length' active>
                             <ul class="video-players fandub">
                                 <li v-for="video in videos.fandub" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
-                                    <span>{{ video.author }}</span><span class="hosting">{{ video.hosting }}</span>
+                                    <span>{{ video.author || watch.ep + ' серия' }}</span><span class="hosting">{{ video.hosting }}</span>
                                 </li>
                             </ul>
                         </b-tab>
-                        <b-tab title="Субтитры">
+                        <b-tab title="Субтитры" v-if='videos.sub && videos.sub.length'>
                             <ul class="video-players sub">
                                 <li v-for="video in videos.sub" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id, eng: video.kindClass && video.kindClass.indexOf('english') !== -1}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
-                                    <span>{{ video.author }}</span><span class="hosting">{{ video.hosting }}</span>
+                                    <span>{{ video.author || watch.ep + ' серия' }}</span><span class="hosting">{{ video.hosting }}</span>
                                 </li>
                             </ul>
                         </b-tab>
-                        <b-tab title="Оригинал">
+                        <b-tab title="Оригинал" v-if='videos.raw && videos.raw.length'>
                             <ul class="video-players raw">
                                 <li v-for="video in videos.raw" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
-                                    <span>{{ video.author }}</span><span class="hosting">{{ video.hosting }}</span>
+                                    <span>{{ video.author || watch.ep + ' серия' }}</span><span class="hosting">{{ video.hosting }}</span>
                                 </li>
                             </ul>
                         </b-tab>
                     </b-tabs>
                 </b-card>
                 <select id="select-ep" class="form-control" v-model="watch.ep">
-                    <option v-for="epNum in anime.availableEp" :value="epNum" @click="watch.videoId=null">{{epNum}} серия</option>
+                    <option v-for="epNum in anime.episodes_aired" :value="epNum" @click="watch.video_id=null">{{epNum}} серия</option>
                 </select>
             </div>
 

@@ -22,7 +22,8 @@
             aria-label="Search"
             v-model="search"
             @input="onlineSearch"
-            @blur="clear">
+            @blur="clear"
+            >
     </form>
     <transition name='fade'>
         <div id="searchResult" v-show="search.length">
@@ -46,13 +47,21 @@
                 <ul>
                     <li class="header header-2">Аниме</li>
                     <li v-if="oLoading_anime"><div class='load-spinner small'></div></li>
-                    <li class="item" v-for="item in searchOnline_anime" v-else-if="searchOnline_anime.length > 0" @click="select_anime(item.id)">{{ item.russian }}<br><span>{{ item.name }}</span></li>
+                    <li class="item" v-for="item in searchOnline_anime" v-else-if="searchOnline_anime.length > 0" @click="select(item)">
+                        {{ item.russian }}
+                        <span>{{ item.name }}</span>
+                        <span class='text-muted'>{{item.source}}</span>
+                    </li>
                     <li v-else>Ничего не найдено</li>
                 </ul>
                 <ul>
                     <li class="header header-2">Манга</li>
                     <li v-if="oLoading_manga"><div class='load-spinner small'></div></li>
-                    <li class="item" v-for="item in searchOnline_manga" v-else-if="searchOnline_manga.length > 0" @click="select_manga(item.id)">{{ item.russian }}<br><span>{{ item.name }}</span></li>
+                    <li class="item" v-for="item in searchOnline_manga" v-else-if="searchOnline_manga.length > 0" @click="select(item)">
+                        {{ item.russian }}
+                        <span>{{ item.name }}</span>
+                        <span class='text-muted'>{{item.source}}</span>
+                    </li>
                     <li v-else>Ничего не найдено</li>
                 </ul>
             </div>

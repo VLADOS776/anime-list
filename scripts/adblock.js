@@ -1,9 +1,5 @@
 let blocked = require('./blocked');
 
-let allSites = '(' + blocked.join('|') + ')';
-
-let testRegExp = new RegExp(allSites, 'i');
-
 module.exports.isBlocked = function(url) {
     let isAd = false;
     blocked.forEach(function(element) {
@@ -14,4 +10,16 @@ module.exports.isBlocked = function(url) {
     return isAd;
 }
 
-module.exports.blockList = blocked;
+module.exports.addFilter = function(filter) {
+    blocked.push(filter);
+    return true;
+}
+
+module.exports.addFilters = function(filterArr) {
+    blocked = blocked.concat(filterArr);
+    return true;
+}
+
+module.exports.blockList = function() {
+    return blocked;
+}

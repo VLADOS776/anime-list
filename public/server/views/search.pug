@@ -8,7 +8,8 @@ block content
         .cards-wrap
             .card-columns
                 each anime in results
-                    a.card(href='/anime/' + anime.id)
+                    - var a_query = anime.id ? 'id=' + anime.id : 'name=' + anime.name + '&source=' + anime.source
+                    a.card(href='/anime?' + a_query)
                         img.card-img(src='https://shikimori.org/' + anime.image.original, alt=anime.name)
                         .card-body.card-img-overlay
                             h4.card-title= anime.russian

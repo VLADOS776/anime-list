@@ -4,4 +4,10 @@
         display: block;
         margin-bottom: .5rem;
     }
+    &__icon {
+        float: left;
+        max-width: 70px;
+        margin-right: 1rem;
+        max-height: 70px;
+    }
 }

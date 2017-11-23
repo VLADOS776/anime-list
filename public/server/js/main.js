@@ -2,7 +2,10 @@ $(function () {
     $('#select-ep').change(function () {
         let ep = parseInt($(this).val());
 
-        location.search = '?episode=' + ep;
+        let newSearch = updateQueryStringParameter(location.search, 'episode', ep);
+        newSearch = updateQueryStringParameter(newSearch, 'videoId', null);
+        location.search = newSearch;
+        //location.search = '?episode=' + ep;
     })
 
     $('textarea#note').change(function () {
@@ -20,13 +23,18 @@ $(function () {
             url: '/api/note'
         })
     })
+
 })
 
-function markAsWatched(animeId, ep) {
-    console.log('Mark as watched anime:' + animeId, 'Episode:', ep);
+$('.card-img').on('error', function() {
+    $(this).attr('src', 'img/img-error.jpg')
+})
+
+function markAsWatched(query, ep) {
+    console.log('Mark as watched anime:' + query, 'Episode:', ep);
 
     $.post('/api/watched', {
-        animeId: anime.id,
+        query: query,
         episode: ep
     })
         .done(function (data) {
@@ -41,8 +49,13 @@ function updateQueryStringParameter(uri, key, value) {
     var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
     var separator = uri.indexOf('?') !== -1 ? "&" : "?";
     if (uri.match(re)) {
-        return uri.replace(re, '$1' + key + "=" + value + '$2');
+        if (value == null) {
+            return uri.replace(re, '$2');
+        } else {
+            return uri.replace(re, '$1' + key + "=" + value + '$2');
+        }
     } else {
+        if (value == null) return uri
         return uri + separator + key + "=" + value;
     }
 }

@@ -9,33 +9,37 @@ block content
                 |  Назад
         .d-flex.info
             .left-side.mr-4
-                img(src='https://shikimori.org/'+anime.image.original)
+                img.anime-poster(src=(anime.cover || 'https://shikimori.org/' + anime.image.original) style="max-width:100%" onerror='this.src="img/img-error.jpg"')
             .right-side.d-flex.flex-column.justify-content-around
                 div
                     div
                         h5= anime.russian + ' '
-                            small.text-muted= new Date(anime.aired_on).getFullYear()
+                            small.text-muted= anime.year || new Date(anime.aired_on).getFullYear()
                         h6= anime.name
                     div
                         each genre in anime.genres
-                            span.genre= genre.russian
+                            span.genre= typeof genre == 'object' ? genre.russian : genre
                 div
                     if anime.status == 'released'
                         span.text-primary= anime.episodes + ' / ' + anime.episodes + ' эп.'
                     else
                         span.text-primary= anime.episodes_aired + ' / ' + (anime.episodes > 0 ? anime.episodes : '??') + ' эп.'
-                    |  • 
-                    span.text-primary= anime.duration + ' мин.'
+                    if anime.duration
+                        |  • 
+                        span.text-primary= anime.duration + ' мин.'
+                if anime.score
+                    div
+                        h3.text-primary= anime.score
                 if anime.watched
                     div= 'Просмотрено: ' + anime.watched
                 div.buttons
-                    a.btn.btn-outline-warning(href='/watch/' + anime.id)
+                    a.btn.btn-outline-warning(href='/watch?' + (anime.id ? 'id=' + anime.id : 'name=' + anime.name + '&source=' + anime.source))
                         i.fa.fa-play
                         |  Смотреть
         .description
             b Описание:
             p= anime.description
-        if anime.notes
+        if anime.notes && Object.keys(anime.notes).length > 0
             hr
             h5 Заметки
             ul.notes

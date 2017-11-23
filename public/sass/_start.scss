@@ -35,19 +35,22 @@ $cardsColumns: 5;
 .card-columns {
     -webkit-column-count: $cardsColumns;
     column-count: $cardsColumns;
+    column-width: 8rem;
 }
 .card {
     cursor: pointer;
     color: #fff;
+    .card-img {
+        padding-bottom: 1px;
+        min-height: 150px;
+        max-width: 300px;
+    }
     .card-img-overlay {
         top: inherit;
         padding: 0.5rem;
         padding-bottom: 0.2rem;
         background: linear-gradient(transparent, #000);
         padding-top: 2.5rem;
-    }
-    img {
-        max-width: 300px;
     }
     h4.card-title {
         font-size: 1rem;

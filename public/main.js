@@ -5,7 +5,8 @@ var remote = require('electron').remote,
     {dialog} = require('electron').remote,
     {ipcRenderer} = require('electron'),
     fs = require('fs'),
-    path = require('path');
+    path = require('path'),
+    compareVersions = require('compare-versions');
 
 var Vue = require('./js/libs/vue.js'),
     db = require('./js/db.js'),
@@ -13,7 +14,8 @@ var Vue = require('./js/libs/vue.js'),
     shikimori = require('./js/shikimoriInfo'),
     {anime: animeInfo, manga: mangaInfo} = require('./js/shikimoriInfo'),
     subtitles = require('./js/subtitles'),
-    repos = require('./js/repos');
+    repos = require('./js/repos'),
+    Fuse = require('./js/libs/fuse');
 
 var onlineManga = require('./js/onlineManga.js');
 
@@ -21,25 +23,36 @@ const log = require('./js/log'),
       config = require('./js/config'),
       miner = require('./miner'),
       Plugins = require('./plugin'),
+      Sources = require('./sources'),
       emitter = require('./emitter');
 
 const server = require('./server');
+
+const Analytics = require('electron-google-analytics').default;
+const ga = new Analytics('UA-26654861-22');
+const clientID = require("os").userInfo().username;
 
 //var anime = require('animejs');
 
 var DEV = true;
 
 server.on('watched', function(data) {
-    let anime = app.allAnime.find((anime) => anime.id === data.animeId);
+    let anime = app.allAnime.find((anime) => {
+        if (data.query.id) {
+            return anime.id === data.query.id
+        } else if (data.query.name && data.query.source) {
+            return anime.name == data.query.name && anime.source == data.query.source
+        }
+    });
     
     if (anime) {
         anime.watched = data.episode;
-        db.anime.watchEp(anime.id, data.episode);
-    } else {
-        animeInfo.info(data.animeId, (error, anime) => {
+        db.anime.watchEp(anime, data.episode);
+    } else if (data.query.id) {
+        animeInfo.info(data.query.id, (error, anime) => {
             if (anime) {
                 db.anime.add(anime, () => {
-                    db.anime.watchEp(anime.id, data.episode);
+                    db.anime.watchEp(anime, data.episode);
                     app.$emit('update-all-anime');
                 })
             }
@@ -89,6 +102,23 @@ var Mixins = {
                 this.$root.$emit('manga', manga)
             },
         }
+    },
+    pluginsCategories: {
+        computed: {
+            allCat: function() {
+                let tmp = [];
+                Plugins.getAllPlugins().forEach(plug => {
+                    if (Array.isArray(plug.opt.category)) {
+                        plug.opt.category.forEach(category => {
+                            if (!tmp.includes(category)) {
+                                tmp.push(category)
+                            }
+                        })
+                    }
+                });
+                return tmp;
+            }
+        }
     }
 }
 
@@ -107,18 +137,57 @@ Vue.component('start', {
     data: function() {
         return {
             selectedHorizontal: null,
+            droppedTime: 1000 * 60 * 60 * 24 * 18, // 2.5 weeks
             dropdownHorizontal: [
                 { 
                     name: 'Смотрю',
-                    filter: 'anime.watched < (anime.episodes_aired || anime.episodes)',
-                    sort: 'a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched : a.lastWatched ? -1 : b.lastWatched ? 1 : 0',
-                    limit: 10
+                    filter: (anime) => {
+                        if (anime.watched < (anime.episodes_aired || anime.episodes)) {
+                            if (anime.lastWatched && Date.now() - anime.lastWatched > this.droppedTime) {
+                                return false
+                            }
+                            return true;
+                        }
+                        return false;
+                    },
+                    sort: (a, b) => {
+                        return a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched : 
+                               a.lastWatched ? -1 :
+                               b.lastWatched ? 1 :
+                               0
+                    },
+                    //limit: 10
                 },
                 { 
                     name: 'Хочу посмотреть',
-                    filter: '!anime.watched',
-                    sort: 'a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched : a.lastWatched ? -1 : b.lastWatched ? 1 : 0',
-                    limit: 10
+                    filter: function(anime) {
+                        return !anime.watched
+                    },
+                    sort: function(a, b) {
+                        return a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched :
+                               a.lastWatched ? -1 :
+                               b.lastWatched ? 1 :
+                               0
+                    },
+                    //limit: 10
+                },
+                { 
+                    name: 'Брошено',
+                    filter: (anime) => {
+                        if (anime.watched < (anime.episodes_aired || anime.episodes)) {
+                            if (anime.lastWatched && Date.now() - anime.lastWatched > this.droppedTime) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+                    sort: function(a, b) {
+                        return a.lastWatched && b.lastWatched ? b.lastWatched - a.lastWatched :
+                               a.lastWatched ? -1 :
+                               b.lastWatched ? 1 :
+                               0
+                    },
+                    //limit: 10
                 }
             ],
             selectedMain: null,
@@ -142,13 +211,13 @@ Vue.component('start', {
         },
         horisontalList: function() {
             if (this.selectedHorizontal) {
-                let list = this.all_anime.filter(anime => eval(this.selectedHorizontal.filter));
+                let list = this.all_anime.filter(this.selectedHorizontal.filter);
                 
                 if (this.selectedHorizontal.sort) {
-                    list.sort((a, b) => eval(this.selectedHorizontal.sort));
+                    list.sort(this.selectedHorizontal.sort);
                 }
                 if (this.selectedHorizontal.limit) {
-                    list.slice(0, this.selectedHorizontal.limit);
+                    list = list.slice(0, this.selectedHorizontal.limit);
                 }
                 return list;
             } else {
@@ -159,6 +228,11 @@ Vue.component('start', {
     mounted: function() {
         this.selectedHorizontal = this.dropdownHorizontal[0];
         this.selectedMain = this.dropdownMain[0];
+    },
+    methods: {
+        card_error: function(err) {
+            err.target.src = 'img/img-error.jpg';
+        }
     }
 })
 
@@ -181,6 +255,12 @@ Vue.component('media', {
     computed: {
         isImage: function() {
             return /\.(jpg|png|gif)/gi.test(this.full);
+        },
+        previewLink: function() {
+            return this.preview.startsWith('/') ? 'https://shikimori.org/'+ this.preview : this.preview;
+        },
+        fullLink: function() {
+            return this.full.startsWith('/') ? 'https://shikimori.org/'+ this.full : this.full;
         }
     },
     watch: {
@@ -237,9 +317,11 @@ Vue.component('top-bar', {
         searchLocal_anime: function() {
             if (this.search.length === 0) return []
             
-            let filtered = this.allanime.filter(a => a.name.toLowerCase().includes(this.search.toLowerCase()) ||
-                                                a.russian.toLowerCase().includes(this.search.toLowerCase()))
-                            .slice(0, 10);
+            let filtered = this.allanime.filter(a => {
+                return a.name && a.name.toLowerCase().includes(this.search.toLowerCase()) ||
+                       a.russian && a.russian.toLowerCase().includes(this.search.toLowerCase())
+                })
+                .slice(0, 10);
             
             return filtered
         },
@@ -262,22 +344,38 @@ Vue.component('top-bar', {
             this.oLoading_anime = true;
             this.oLoading_manga = true;
             let self = this;
+
+            let fuseConfig = {
+                shouldSort: true,
+                threshold: 0.25,
+                location: 0,
+                distance: 100,
+                maxPatternLength: 32,
+                minMatchCharLength: 1,
+                keys: [ "name", "russian" ]
+            };
             
             // Ждем, пока пользователь наберет весь запрос
             this.onlineSearchTimeout = setTimeout(function() {
-                shikimori.client.get('animes', { search: self.search, limit: 10 }, function(err, response, body) {
-                    self.oLoading_anime = false;
-                    if (err) log.error(err);
-                    
-                    self.searchOnline_anime = response;
+                Sources.search(self.search, function(results) {
+                    if (results.length) {
+                        if (results[0].type === 'anime') {
+                            self.oLoading_anime = false;
+
+                            let fuse = new Fuse(self.searchOnline_anime.concat(results), fuseConfig);
+
+                            self.searchOnline_anime = fuse.search(self.search);
+                        } else if (results[0].type === 'manga') {
+                            self.oLoading_manga = false;
+                            let fuse = new Fuse(self.searchOnline_manga.concat(results), fuseConfig);
+
+                            self.searchOnline_manga = fuse.search(self.search)
+                        }
+                    }
                 })
-                shikimori.client.get('mangas', { search: self.search, limit: 10 }, function(err, response, body) {
-                    self.oLoading_manga = false;
-                    if (err) log.error(err);
-                    
-                    self.searchOnline_manga = response;
-                })
-                PluginEvent({ type: 'search', query: self.search })
+                PluginEvent({ type: 'search', query: self.search });
+
+                ga.event('Search', 'new search', { evLabel: self.search, clientID: clientID });
             }, 1000)
         },
         start_page: function() {
@@ -288,6 +386,29 @@ Vue.component('top-bar', {
         },
         clear: function() {
             setTimeout(() => { this.search = '' }, 150)
+        },
+        select: function(item) {
+            if (item.source === 'shikimori.org') {
+                if (item.type === 'anime') {
+                    this.select_anime(item.id);
+                } else {
+                    this.select_manga(item.id);
+                }
+            } else {
+                Sources.info(item, info => {
+                    if (info == null) {
+                        return;
+                    }
+                    this.$root.selected = info;
+                    if (info.type == 'anime') {
+                        this.change_page('anime');
+                    } else if (info.type === 'manga') {
+                        this.change_page('manga');
+                    } else {
+                        this.change_page(info.type);
+                    }
+                })
+            }
         }
     },
     watch: {
@@ -367,25 +488,31 @@ Vue.component('anime', {
             if (!this.anime.inDB) {
                 let self = this;
                 db.anime.add(JSON.parse(JSON.stringify(this.anime)), function() {
-                    db.anime.watchEp(self.anime.id, self.anime.availableEp, function() {
+                    db.anime.watchEp(self.anime, self.anime.availableEp, function() {
                         self.$set(self.anime, 'watched', self.anime.availableEp);
                         self.$root.$emit('update-all-anime');
 
-                        PluginEvent({ type: 'alreadyWatched' })
+                        PluginEvent({ type: 'alreadyWatched' });
+
+                        ga.event('Already watched', 'New anime', { evLabel: self.anime.name, clientID: clientID });
                     });
                 })
             } else {
                 if (this.anime.watched && this.anime.watched === this.anime.availableEp) {
-                    db.anime.watchEp(this.anime.id, 0, () => {
+                    db.anime.watchEp(this.anime, 0, () => {
                         this.$set(this.anime, 'watched', 0);
                         this.$root.$emit('update-all-anime');
 
                         PluginEvent({ type: 'alreadyWatched' })
+
+                        ga.event('Already watched', 'Unwatched', { evLabel: this.anime.name, clientID: clientID });
                     });
                 } else {
-                    db.anime.watchEp(this.anime.id, this.anime.availableEp, () => {
+                    db.anime.watchEp(this.anime, this.anime.availableEp, () => {
                         this.$set(this.anime, 'watched', this.anime.availableEp);
                         this.$root.$emit('update-all-anime');
+
+                        ga.event('Already watched', 'Favorited', { evLabel: this.anime.name, clientID: clientID });
 
                         PluginEvent({ type: 'alreadyWatched' })
                     });
@@ -398,12 +525,16 @@ Vue.component('anime', {
                     this.$set(this.anime, 'inDB', true);
                     this.$root.$emit('update-all-anime');
 
-                    PluginEvent({ type: 'favorite' })
+                    ga.event('Favorite', 'Add', { evLabel: this.anime.name, clientID: clientID });
+
+                    PluginEvent({ type: 'favorite' });
                 })
             } else {
-                db.anime.remove(this.anime.id, () => {
+                db.anime.remove(this.anime, () => {
                     this.$set(this.anime, 'inDB', false);
                     this.$root.$emit('update-all-anime');
+
+                    ga.event('Favorite', 'Remove', { evLabel: this.anime.name, clientID: clientID });
 
                     PluginEvent({ type: 'favorite' })
                 });
@@ -473,13 +604,19 @@ Vue.component('anime', {
                     folder = folder[0];
                 }
             }
-            db.anime.set(this.anime.id, { folder: folder }, (newDoc) => {
+            db.anime.set(this.anime, { folder: folder }, (newDoc) => {
                 if (newDoc) {
                     this.$set(this.anime, 'folder', folder);
 
-                    PluginEvent({ type: 'setFolder', folder: folder })
+                    PluginEvent({ type: 'setFolder', folder: folder });
+
+                    ga.event('Folder', 'Set folder', { evLabel: this.anime.name, clientID: clientID });
                 }
             })
+        },
+        showMoreAltNames: function() {
+            $('.altNames__showMore').hide();
+            $('.altNames__name.d-none').removeClass('d-none');
         }
     },
     created: function() {
@@ -502,14 +639,18 @@ Vue.component('watch', {
     props: ['watch', 'anime'],
     computed: {
         videoEmbed: function() {
-            if (this.videos.player && this.videos.player.embed && this.videos.player.embed.startsWith('//')) {
-                return 'http:' + this.videos.player.embed
+            if (this.videos.player && this.videos.player.embed) {
+                if (this.videos.player.embed.startsWith('//')) {
+                    return 'http:' + this.videos.player.embed
+                } else {
+                    return this.videos.player.embed
+                }
             }
         }
     },
     watch: {
-        'watch.ep': function() {
-            if (!this.local) {
+        'watch.ep': function(val) {
+            if (!this.local && val) {
                 this.loadPlayer();
             }
         },
@@ -560,8 +701,31 @@ Vue.component('watch', {
     },
     methods: {
         loadPlayer: function(videoOnly=false) {
+            let sendObj = {
+                anime: this.anime,
+                watch: this.watch,
+                videos: this.videos,
+                videoOnly: false
+            }
+            if (!videoOnly) {
+                this.loading = true;
+            } else {
+                this.loadingVideo = true;
+                sendObj.videoOnly = true;
+            }
+
+            Sources.watch(sendObj, (watchObj, err) => {
+                if (err || !watchObj) {
+                    PluginEvent({ type: 'error', error: err, watch: this.watch})
+                } else {
+                    this.videos = watchObj;
+                    this.loading = false;
+                    this.loadingVideo = false;
+                    PluginEvent({ type: 'watch', watch: this.watch })
+                }
+            });
             // Загрузить всё
-            let self = this;
+            /*let self = this;
             if (!videoOnly) {
                 this.loading = true;
                 if (this.anime.id == null) {
@@ -570,22 +734,28 @@ Vue.component('watch', {
                 }
 
                 online.getPlayers(this.anime.id, this.watch.ep, this.watch.videoId, function(vids) {
-                    self.videos = vids;
-                    self.loading = false;
-                    //online.getVideoAsync(2000);
-                    PluginEvent({ type: 'watch', watch: self.watch })
+                    if (typeof vids === 'number') {
+                        PluginEvent({ type: 'error', error: { msg: 'Not found', code: 404 }, watch: self.watch })
+                    } else {
+                        self.videos = vids;
+                        self.loading = false;
+                        PluginEvent({ type: 'watch', watch: self.watch })
+                    }
                 })
             } else {
                 // Загрузить только видео
                 this.loadingVideo = true;
                 
                 online.getPlayers(this.anime.id, this.watch.ep, this.watch.videoId, function(vids) {
-                    self.videos.player = vids.player;
-                    self.loadingVideo = false;
-                    //online.getVideoAsync(2000);
-                    PluginEvent({ type: 'watch', watch: self.watch })
+                    if (typeof vids === 'number') {
+                        PluginEvent({ type: 'error', error: { msg: 'Not found', code: 404 }, watch: self.watch })
+                    } else {
+                        self.videos.player = vids.player;
+                        self.loadingVideo = false;
+                        PluginEvent({ type: 'watch', watch: self.watch })
+                    }
                 })
-            }
+            }*/
         },
         back: function() {
             this.$emit('change_page', 'anime')
@@ -593,39 +763,43 @@ Vue.component('watch', {
         prevEp: function() {
             if (this.watch.ep > 1) {
                 this.watch.ep--;
-                this.watch.videoId = null;
-                this.loadPlayer();
+
+                ga.event('Watch controls', 'Prev ep', { evLabel: this.anime.name + ' - ' + this.watch.ep, clientID: clientID });
             }
         },
         nextEp: function() {
             if (this.watch.ep < this.anime.episodes_aired || this.anime.episodes) {
                 this.watch.ep++;
-                this.watch.videoId = null;
-                this.loadPlayer();
+
+                ga.event('Watch controls', 'Next ep', { evLabel: this.anime.name + ' - ' + this.watch.ep, clientID: clientID });
             }
         },
         markAsWatched: function() {
             if (!this.anime.inDB) {
                 let self = this;
                 db.anime.add(JSON.parse(JSON.stringify(this.anime)), function() {
-                    db.anime.watchEp(self.anime.id, self.watch.ep);
+                    db.anime.watchEp(self.anime, self.watch.ep);
                     self.$root.$emit('update-all-anime');
 
                     PluginEvent({ type: 'markAsWatched', watch: self.watch })
+
+                    ga.event('Watch controls', 'Mark as watched', { evLabel: self.anime.name + ' - ' + self.watch.ep, clientID: clientID });
                 })
             } else {
                 let mark = this.watch.ep;
                 if (this.watch.ep < this.anime.watched) {
                     mark--;
                 }
-                db.anime.watchEp(this.anime.id, mark);
+                db.anime.watchEp(this.anime, mark);
                 this.$set(this.anime, 'watched', mark);
 
-                PluginEvent({ type: 'markAsWatched', watch: this.watch })
+                PluginEvent({ type: 'markAsWatched', watch: this.watch });
+
+                ga.event('Watch controls', 'Mark as unwatched', { evLabel: this.anime.name + ' - ' + this.watch.ep, clientID: clientID });
             }
         },
-        change_videoId: function(videoId) {
-            this.watch.videoId = videoId;
+        change_videoId: function(video_id) {
+            this.watch.video_id = video_id;
             this.loadPlayer(true);
 
             PluginEvent({ type: 'changeVideo', watch: this.watch })
@@ -648,16 +822,16 @@ Vue.component('watch', {
             document.getElementById('localPlayer').textTracks[0].mode = 'showing';
         },
         removeAdInIframe: function() {
-            try {
+            /*try {
                 let iframe = document.querySelector('iframe#player');
                 iframe.onload = function() {
                     online.removeAd();
                     console.log('Ad in iframe removed');
                 }    
-            } catch (error) {}
+            } catch (error) {}*/
         },
         note: function() {
-            db.anime.set(this.anime.id, { notes: this.anime.notes });
+            db.anime.set(this.anime, { notes: this.anime.notes });
 
             PluginEvent({ type: 'addNote', notes: this.anime.notes, watch: this.watch })
         }
@@ -754,13 +928,13 @@ Vue.component('manga', {
                 let self = this;
                 
                 db.manga.add(JSON.parse(JSON.stringify(this.manga)), function() {
-                    db.manga.readChapter(self.manga.id, readed, function() {
+                    db.manga.readChapter(self.manga, readed, function() {
                         self.$set(self.manga, 'readed', readed);
                         self.$root.$emit('update-all-manga');
                     });
                 })
             } else {
-                db.manga.readChapter(this.manga.id, readed, () => {
+                db.manga.readChapter(this.manga, readed, () => {
                     this.$set(this.manga, 'readed', readed);
                     this.$root.$emit('update-all-manga');
                 });
@@ -776,7 +950,7 @@ Vue.component('manga', {
                     this.$root.$emit('update-all-manga');
                 })
             } else {
-                db.manga.remove(this.manga.id, () => {
+                db.manga.remove(this.manga, () => {
                     this.$set(this.manga, 'inDB', false);
                     this.$root.$emit('update-all-manga');
                 });
@@ -894,7 +1068,7 @@ Vue.component('read', {
             
             if (!this.manga.inDB) {
                 db.manga.add(JSON.parse(JSON.stringify(this.manga)), () => {
-                    db.manga.bookmark(this.manga.id, bookmark);
+                    db.manga.bookmark(this.manga, bookmark);
                     
                     this.$set(this.manga, 'bookmark', bookmark);
                     PluginEvent({ type: 'bookmark', added: true, watch: this.watch })
@@ -902,12 +1076,18 @@ Vue.component('read', {
             } else {
                 if (this.bookmarkClass['btn-info']) {
                     // Если закладка уже стоит - удалить её.
-                    db.manga.DB.update({ id: this.manga.id }, { $unset: { bookmark: true } }, {}, () => {
+                    let query = {};
+                    if (this.manga.id) {
+                        query = { id: this.manga.id };
+                    } else if (this.manga.name && this.manga.source) {
+                        query = { name: manga.name, source: this.manga.source };
+                    }
+                    db.manga.DB.update(query, { $unset: { bookmark: true } }, {}, () => {
                         this.$set(this.manga, 'bookmark', null)
                         PluginEvent({ type: 'bookmark', added: false, watch: this.watch })
                     })
                 } else {
-                    db.manga.bookmark(this.manga.id, bookmark);
+                    db.manga.bookmark(this.manga, bookmark);
                     this.$set(this.manga, 'bookmark', bookmark)
 
                     PluginEvent({ type: 'bookmark', added: true, watch: this.watch })
@@ -988,7 +1168,7 @@ Vue.component('read', {
 
             // Обновляем в БД
             if (this.manga.inDB && changed) {
-                db.manga.DB.update({ id: this.manga.id }, { $set: { volumes: this.manga.volumes, chapters: this.manga.chapters }})
+                db.manga.set(this.manga, { volumes: this.manga.volumes, chapters: this.manga.chapters })
             }
         }
     },
@@ -1046,17 +1226,33 @@ Vue.component('plugin', {
         return {
             hasUpdate: false,
             showRefresh: false,
-            newVersion: null
+            newVersion: null,
+            forThisAppVersion: true
         }
     },
     computed: {
         active: {
             get: function() {
-                return config.get('plugins.' + this.plugin.id + '.active', true)
+                return config.get('plugins.' + this.plugin.id + '.active', true);
             },
             set: function(val) {
                 this.plugin.active = val;
                 config.set('plugins.' + this.plugin.id + '.active', val);
+
+                Plugins._setActive(this.plugin.id, val);
+                
+                if (val) {
+                    ga.event('Plugins', 'Turn on', { evLabel: `${this.plugin.name} v${this.plugin.version} (${this.plugin.id})`, clientID: clientID });
+                } else {
+                    ga.event('Plugins', 'Turn off', { evLabel: `${this.plugin.name} v${this.plugin.version} (${this.plugin.id})`, clientID: clientID });
+                }
+            }
+        },
+        icon_src: function() {
+            if (this.plugin.opt.icon != null) {
+                return path.join(Plugins.pluginsDir(), this.plugin.id, this.plugin.opt.icon)
+            } else {
+                return null;
             }
         }
     },
@@ -1077,6 +1273,8 @@ Vue.component('plugin', {
             this.hasUpdate = true;
             this.newVersion = update[0];
         }
+
+        this.forThisAppVersion = this.plugin.opt['min-version'] != null ? compareVersions(this.plugin.opt['min-version'], remote.app.getVersion()) < 1 : true;
     }
 })
 
@@ -1085,21 +1283,55 @@ Vue.component('plugin-search', {
     data: function() {
         return {
             query: '',
-            result: []
+            result: [],
+            analyticsCD: null,
+            allRepos: repos.getAllReposInfo(),
+            selected_category: 'all',
+            selected_repo: 'all',
+            allCat: []
         }
     },
     watch: {
         query: function(val) {
             this.search(val);
+        },
+        selected_category: function() {
+            this.search(this.query)
+        },
+        selected_repo: function() {
+            this.search(this.query)
         }
     },
     methods: {
         search: function(query) {
-            this.result = repos.search(query)
+            this.result = repos.search(query);
+
+            if (this.selected_category !== 'all') {
+                this.result = this.result.filter(plug => Array.isArray(plug.category) && plug.category.includes(this.selected_category));
+            }
+
+            if (this.selected_repo !== 'all') {
+                this.result = this.result.filter(plug => plug.repo.name === this.selected_repo);
+            }
+
+            if (this.analyticsCD) clearTimeout(this.analyticsCD);
+
+            this.analyticsCD = setTimeout(_ => {
+                ga.event('Plugins', 'Search', { evLabel: query, clientID: clientID });
+            }, 700)
         }
     },
     mounted: function() {
         this.search();
+        this.result.forEach(plug => {
+            if (Array.isArray(plug.category)) {
+                plug.category.forEach(category => {
+                    if (!this.allCat.includes(category) && category !== 'source') {
+                        this.allCat.push(category)
+                    }
+                })
+            }
+        });
     }
 })
 Vue.component('plugin-in-search', {
@@ -1113,6 +1345,15 @@ Vue.component('plugin-in-search', {
             error: null
         }
     },
+    computed: {
+        icon_src: function() {
+            if (this.plugin.icon != null) {
+                return this.plugin.pluginDir + '/' + this.plugin.icon;
+            } else {
+                return null;
+            }
+        }
+    },
     methods: {
         download: function() {
             this.installign = true;
@@ -1120,6 +1361,8 @@ Vue.component('plugin-in-search', {
                 this.installing = false;
                 this.installed = true;
                 this.showRefresh = true;
+
+                ga.event('Plugins', 'Install', { evLabel: `${this.plugin.name} v${this.plugin.version} (${this.plugin.id})`, clientID: clientID });
             })
             .catch(err => {
                 this.installing = false;
@@ -1179,7 +1422,7 @@ Vue.component('repos', {
 
 Vue.component('settings', {
     template: getTemplate('settings'),
-    mixins: [Mixins.browser],
+    mixins: [Mixins.browser,  Mixins.pluginsCategories],
     data: function() {
         return {
             server: server,
@@ -1188,7 +1431,10 @@ Vue.component('settings', {
             miner: miner,
             minerThreads: config.get('miner.threads', 2),
             minerThrottle: config.get('miner.throttle', 0.5) * 10,
+            selected_category: 'all',
+            selected_repo: 'all',
             pluginList: Plugins.getAllPlugins(),
+            sourceList: Plugins.getAllSources(),
             tabs: [
                 { 
                     name: 'Сервер',
@@ -1256,23 +1502,48 @@ Vue.component('settings', {
             set: function(newVal) {
                 config.set('anime.showNotes', newVal);
             }
+        },
+        pluginList_filtered: function() {
+            let plugins = this.pluginList.filter(plugin => {
+                if (this.selected_category !== 'all') {
+                    if (!Array.isArray(plugin.opt.category) || !plugin.opt.category.includes(this.selected_category)) {
+                        return false
+                    }
+                }
+                return true
+            })
+            let sources = [];
+            if (this.selected_category === 'sources' || this.selected_category === 'all') {
+                sources = [].concat(this.sourceList.anime, this.sourceList.manga);
+
+            }
+            
+            return plugins.concat(sources);
         }
     },
     methods: {
         toggleServer: function() {
             if (!this.server.active) {
-                this.server.start()
+                this.server.start();
+
+                ga.event('Server', 'Server on', { clientID: clientID });
             } else {
                 this.server.stop();
+
+                ga.event('Server', 'Server off', { clientID: clientID });
             }
         },
         toggleMiner: function() {
             if (miner.miner.isRunning()) {
                 miner.stop();
                 config.set('miner.autorun', false);
+
+                ga.event('Miner', 'Miner off', { clientID: clientID });
             } else {
                 miner.start();
                 config.set('miner.autorun', true);
+
+                ga.event('Miner', 'Miner on', { clientID: clientID });
             }
             this.$forceUpdate();
         },
@@ -1280,7 +1551,7 @@ Vue.component('settings', {
             remote.shell.openItem(remote.app.getPath('userData') + '/plugins');
         },
         change_page: function(page) {
-            this.$emit('change_page', page)
+            this.$emit('change_page', page);
         }
     },
     created: function() {
@@ -1311,7 +1582,7 @@ var app = new Vue({
         selected: {},
         watch: {
             ep: 1,
-            videoId: null
+            video_id: null
         },
         search: '',
         allAnime: [],
@@ -1320,27 +1591,37 @@ var app = new Vue({
     },
     watch: {
         selected: function(newVal) {
-            if (this.selected.url.match('/animes')) {
-                this.selected.inDB = this.isInDB(newVal.id);
+            if ((this.selected.url && this.selected.url.match('/animes')) || this.selected.type === 'anime') {
+                this.selected.inDB = this.isInDB(newVal);
                 this.selected.availableEp = this.selected.episodes_aired || this.selected.episodes;
+            } else if ((this.selected.url && this.selected.url.match('/mangas')) || this.selected.type === 'manga') {
+                this.selected.inDB = this.isInDB(newVal, 'allManga');
             }
-            if (this.selected.url.match('/mangas')) {
-                this.selected.inDB = this.isInDB(newVal.id, 'allManga');
-            }
+
             if (this.selected.aired_on) {
                 this.selected.year = new Date(this.selected.aired_on).getFullYear()
             }
             if (this.selected.image && this.selected.image.original) {
                 this.selected.cover = 'https://shikimori.org/' + this.selected.image.original
             }
-            if (this.selected.status && this.selected.status == 'released') {
+            if ((this.selected.status && this.selected.status == 'released') || !this.selected.episodes_aired) {
                 this.selected.episodes_aired = this.selected.episodes;
             }
-            if (!this.selected.source) this.selected.source = 'https://shikimori.org/';
-            this.selected.sourceHost = new URL(this.selected.source).host;
+            if (!this.selected.source) this.selected.source = 'shikimori.org';
+            // FIXME: Исправить это!
+            this.selected.sourceHost = this.selected.source;
 
             // Заметки
             this.selected.notes = this.selected.notes || {};
+        },
+        currentPage: function(val) {
+            let pageName = '';
+            if (/^(?:start|anime|manga|watch|read)/.test(val)) {
+                pageName = this.selected ? this.selected.russian || this.selected.name : '';
+            }
+            if (val == 'start' && !this.selected) pageName = 'Start page';
+
+            ga.pageview('http://anime-list.clan.su/', '/' + val, pageName, clientID);
         }
     },
     methods: {
@@ -1351,13 +1632,13 @@ var app = new Vue({
 
                 if (this.isInDB(anime)) {
                     this.selected = this.allAnime.find(el => el.id === anime);
-                    this.currentPage = 'anime'
+                    this.currentPage = 'anime';
 
                     this.pluginsEmitSelect();
                 } else {
                     animeInfo.info(anime, (error, anime) => {
                         this.selected = anime;
-                        this.currentPage = 'anime'
+                        this.currentPage = 'anime';
 
                         this.pluginsEmitSelect();
                     })
@@ -1367,7 +1648,7 @@ var app = new Vue({
                 log.info('Show anime: %s', anime.id || anime);
 
                 this.selected = anime;
-                this.currentPage = 'anime'
+                this.currentPage = 'anime';
 
                 this.pluginsEmitSelect();
             }
@@ -1402,7 +1683,7 @@ var app = new Vue({
         watchOnline: function() {
             this.watch.ep = this.selected.watched ? this.selected.watched + 1 : 1;
             if (this.watch.ep > this.selected.availableEp) this.watch.ep = this.selected.availableEp;
-            this.watch.videoId = null;
+            this.watch.video_id = null;
 
             this.currentPage="watch";
         },
@@ -1438,9 +1719,12 @@ var app = new Vue({
                 }
             })
         },
+        /**
+         * Обновляет список аниме или манги из базы
+         * @param {string} dbName - имя файла базы
+         * @param {string} into - имя переменной в которую записываются значения из базы
+         */
         updateAll: function(dbName='anime', into='allAnime') {
-            // dbName - имя базы, которую обновляем
-            // into - в какую переменную записываем
             if (!db[dbName] || !db[dbName].getAll) {
                 log.info('Update all. Wrong kind - ' + dbName);
                 return;
@@ -1450,7 +1734,13 @@ var app = new Vue({
                 this[into] = items;
 
                 if (this.selected) {
-                    let foundSelected = this[into].filter(item => item.id === this.selected.id);
+                    let foundSelected = this[into].filter(item => {
+                        if (this.selected.id) {
+                            return item.id === this.selected.id;
+                        } else if (this.selected.name && this.selected.source && item.name && item.source) {
+                            return this.selected.name === item.name && this.selected.source === item.source;
+                        }
+                    });
 
                     if (foundSelected.length && foundSelected[0].kind === this.selected.kind) {
                         this.selected = foundSelected[0];
@@ -1463,12 +1753,24 @@ var app = new Vue({
             this.modal.visible = true;
         },
         change_page: function(page) {
+            if (page !== this.currentPage) {
+                this.pluginsEmitSelect();
+            }
             this.currentPage = page;
-
-            this.pluginsEmitSelect();
         },
-        isInDB: function(itemId, storeName='allAnime') {
-            return typeof this[storeName].find(el => el.id === itemId) !== 'undefined'
+        isInDB: function(item, storeName='allAnime') {
+            if (typeof item === 'number') {
+                return typeof this[storeName].find(el => el.id === item) !== 'undefined'
+            } else if (typeof item === 'object') {
+                return typeof this[storeName].find(el => {
+                    if (item.id) {
+                        return el.id === item.id
+                    }
+                    if (item.name && item.source && el.name && el.source) {
+                        return item.name === el.name && item.source === el.source
+                    }
+                }) !== 'undefined'
+            }
         },
         pluginsEmitSelect: function() {
             // Ждем, когда пройдет анимация.

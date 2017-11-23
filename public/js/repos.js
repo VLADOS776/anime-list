@@ -22,7 +22,7 @@ const fuseConfig = {
     distance: 200,
     maxPatternLength: 32,
     minMatchCharLength: 1,
-    keys: [ "name", "description", "author", "id", "repo.name", "repo.description" ]
+    keys: [ "name", "description", "author", "id" ]
   };
 
 let ReposPlugins = [],
@@ -173,6 +173,7 @@ function getAllPlugins() {
 
                             let tmp = repo.link.split('/');
                             tmp[tmp.length - 1] = el.id;
+                            el.pluginDir = tmp.join('/');
                             tmp.push(el.id + '-' + el.version + '.zip');
                             el.download = tmp.join('/');
 
@@ -212,13 +213,12 @@ function checkUpdates() {
         let repoPlug = ReposPlugins.find(el => el.id == plug.id);
 
         if (repoPlug) {
-            if (compareVersions(repoPlug.version, plug.version)) {
+            if (compareVersions(repoPlug.version, plug.version) > 0) {
                 updates.push(repoPlug);
             }
         }
-
-        emitter.global.event('plugins-update-checked');
     })
+    emitter.global.event('plugins-update-checked');
 }
 
 getAllPlugins();

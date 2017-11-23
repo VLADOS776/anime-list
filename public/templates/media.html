@@ -1,18 +1,18 @@
 <div class="media-item-wrap">
     <div class="modal-mask" @click="active=false" v-if="active">
         <div class="modal-wrapper">
-            <img :src="'https://shikimori.org/'+full" alt='' v-if="isImage">
+            <img :src="fullLink" alt='' v-if="isImage">
             <div class="youtube embed-responsive embed-responsive-16by9" v-else>
-                <iframe class="embed-responsive-item" :src="full" allowfullscreen></iframe>
+                <iframe class="embed-responsive-item" :src="fullLink" allowfullscreen></iframe>
             </div>
         </div>
     </div>
     <div class="media-content" v-if="isImage" @click="active=true">
         <i class="fa fa-search-plus" aria-hidden="true"></i>
-        <img :src="'https://shikimori.org/'+preview" alt="">
+        <img :src="previewLink" alt="">
     </div>
     <div class="media-content" v-else @click="active=true">
         <i class="fa fa-youtube-play" aria-hidden="true"></i>
-        <img :src="preview" alt="">
+        <img :src="previewLink" alt="">
     </div>
 </div>
