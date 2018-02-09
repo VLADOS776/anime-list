@@ -1,6 +1,6 @@
 {
   "name": "animelist",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "main": "index.js",
   "description": "Программа для просмотра аниме и чтения манги.",
   "author": {
@@ -13,7 +13,8 @@
     "debug": "electron --inspect-brk=6646 .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "dist-linux": "electron-builder --linux"
+    "dist-linux": "electron-builder --linux",
+    "gulp": "./node_modules/.bin/gulp"
   },
   "dependencies": {
     "ass-to-vtt": "^1.1.1",
@@ -38,6 +39,9 @@
     "browserify": "^14.4.0",
     "electron": "^1.6.11",
     "electron-builder": "^19.34.2",
+    "gulp": "^3.9.1",
+    "gulp-vueify": "0.0.3",
+    "node-sass": "^4.7.2",
     "vueify": "^9.4.1"
   },
   "build": {

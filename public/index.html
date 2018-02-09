@@ -9,26 +9,7 @@
     <link rel="stylesheet" href="css/main.css">
   </head>
   <body>
-    <div id="app">
-        <top-bar :allanime="allAnime" @anime="showAnime" @change_page="change_page"></top-bar>
-        <div class="container mt-4 mb-4">
-            <transition name='slide' mode="out-in">
-                <component
-                    :is="currentPage"
-                    :anime="selected"
-                    :manga="selected"
-                    :watch="watch"
-                    :all_anime="allAnime"
-                    @watch="watchOnline"
-                    @read="read"
-                    @change_page="change_page"
-                    @anime="showAnime"
-                    @manga="showManga">
-                </component>
-            </transition>
-        </div>
-    </div>
-    
+    <div id="app"></div>
     <script src="js/libs/popper.min.js"></script>
     <script src='main.js'></script>
   </body>

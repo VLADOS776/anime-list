@@ -7,7 +7,7 @@ const request = require('request'),
 
 const config = require('./config'),
       Fuse = require('./libs/fuse'),
-      Plugins = require('../plugin'),
+      //Plugins = require('../plugin'),
       emitter = require('../emitter');
 
 const defaultRepo = {
@@ -209,7 +209,7 @@ function getAllPlugins() {
 }
 
 function checkUpdates() {
-    Plugins.getAllPlugins().forEach(plug => {
+    require('../plugin').getAllPlugins().forEach(plug => {
         let repoPlug = ReposPlugins.find(el => el.id == plug.id);
 
         if (repoPlug) {

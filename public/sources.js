@@ -1,6 +1,7 @@
 const Plugins = require('./plugin'),
       async = require('async'),
-      shikiOnline = require('./js/online');
+      shikiOnline = require('./js/online'),
+      readManga = require('./js/sources/readmanga.me.js');
 // TODO: Проверить, нужен ли вообще async
 
 const shikimori = require('./js/shikimoriInfo');
@@ -75,7 +76,7 @@ module.exports.info = function(item, callback) {
  * @callback callback - Callback
  */
 module.exports.watch = function(info, callback) {
-    if (info.anime.source && info.anime.source.match('shikimori')) {
+    if (!info.anime.source || info.anime.source.match('shikimori')) {
         watchShikimori(info, callback);
         return;
     }
@@ -86,6 +87,38 @@ module.exports.watch = function(info, callback) {
 
         if (filter && filter.watch) {
             filter.watch(info, callback);
+        } else {
+            callback(null);
+        }
+    } else {
+        callback(null);
+    }
+}
+
+/**
+ * Читать мангу
+ * @param {Object} info - Информация
+ * @param {Object} info.manga - Манга
+ * @param {Object} info.read - Информация по просмотру
+ * @param {number} info.read.volume - Номер тома
+ * @param {number} info.read.chapter - Номер главы
+ * @param {number} info.read.page - Номер страницы
+ * @param {string} info.action - Действие пользователя. "page" - Переход на другую страницу, "chapter" - Переход на другую главу
+ * @callback callback - Callback
+ */
+module.exports.read = function(info, callback) {
+    if (!info.manga.source || info.manga.source.match(/readmanga|shikimori/)) {
+        readReadmanga(info, callback);
+        return;
+    }
+
+    let type = info.manga.type || 'manga';
+    let sources = Plugin.getAllSources();
+    if (sources[type]) {
+        let filter = sources[type].find(itm => itm.opt.source === info.manga.source);
+
+        if (filter && filter.read) {
+            filter.read(info, callback);
         } else {
             callback(null);
         }
@@ -129,4 +162,9 @@ function watchShikimori(info, callback) {
             callback(vids);
         }
     })
+}
+function readReadmanga(info, callback) {
+    if (info.action === 'chapter') {
+        readManga.getChapter(info.link, callback)
+    }
 }

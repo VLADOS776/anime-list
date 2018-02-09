@@ -11,7 +11,7 @@ const dependenciesPath = {
         'log': path.join(__dirname, '/js/log.js'),
         'server': path.join(__dirname, '/server.js'),
         'fuse': path.join(__dirname, 'js', 'libs', 'fuse.js'),
-        'vue': path.join(__dirname, 'js', 'libs', 'vue.js')
+        'vue': path.join(__dirname, '..', 'node_modules', 'vue', 'dist', 'vue.js')
     }
 let pluginList = [],
     sourceList = {
@@ -242,6 +242,7 @@ Plugin.prototype.loadAllPlugins = function() {
     let plugins = fs.readdirSync(pluginDirPath);
 
     let pluginFiles = [];
+
 
     plugins.forEach((plugin) => {
         let filePath = path.join(pluginDirPath, plugin);

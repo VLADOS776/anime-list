@@ -12,7 +12,7 @@ block content
         .row
             .col-lg-8.mb-3
                 .player-contaier.embed-responsive.embed-responsive-16by9
-                    if videos.player && videos.player.embed
+                    if videos && videos.player && videos.player.embed
                         iframe#player.embed-responsive-item(src=(videos.player.embed && videos.player.embed.startsWith('htt') ? videos.player.embed : 'http:' + videos.player.embed), frameborder='0', allowfullscreen='')
                     else
                         div#player.embed-responsive-item

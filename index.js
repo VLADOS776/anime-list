@@ -78,7 +78,7 @@ app.on('ready', function () {
 
     // Добавляем referer для сайта hdgo.cc
     mainWindow.webContents.session.webRequest.onBeforeSendHeaders(['*://hdgo.cc/*'], (details, callback) => {
-        details.requestHeaders['Referer'] = 'http://google.com';
+        details.requestHeaders['Referer'] = 'google.com';
         callback({ cancel: false, requestHeaders: details.requestHeaders });
     })
     

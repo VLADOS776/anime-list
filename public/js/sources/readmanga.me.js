@@ -2,6 +2,8 @@ const request = require('request'),
       cheerio = require('cheerio'),
       log = require('../log');
 
+const utils = require('../utils');
+
 function cpLink(link, origin) {
     if (link.indexOf('?mtr=1') === -1) link = link + '?mtr=1';
     link = origin + link;
@@ -9,7 +11,8 @@ function cpLink(link, origin) {
 }
 
 var requestHeaders = {
-    'cookie': 'red_cookie=true'
+    'cookie': 'red_cookie=true',
+    'Referer': 'readmanga.me'
 }
 
 module.exports = {
@@ -160,10 +163,15 @@ module.exports = {
             
             returnObj.volume = parseInt(url.match(/\/vol(\d+)/)[1]);
             returnObj.chapter = parseInt(url.match(/\/vol\d+\/(\d+)[\/?$]/)[1]);
+            returnObj.image = imgArray[0];
+            returnObj.link = url;
             
             callback(null, returnObj);
         })
     },
+    read(info, callback) {
+
+    }
 }
 /**
  * Callback информации о манге
