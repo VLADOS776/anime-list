@@ -257,15 +257,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
 const Mixins = require('../Mixin');
 
 const Media = require('../components/Media'),
@@ -410,17 +401,8 @@ module.exports = {
             })
         },
         whenSelect: function() {
-            if (!this.anime.source || this.anime.source.match(/shikimori/)) {
-                if (config.get('anime.showRelated', true)) {
-                    animeInfo.related(this.anime.id, (error, related) => {
-                        if (related) {
-                            this.$set(this.anime, 'related', related);
-                        }
-                    })
-                }
-            }
-
             if (this.anime.inDB && this.anime.next_episode_at && new Date(this.anime.next_episode_at) - Date.now() < 0) {
+                // TODO: Переделать через Source
                 animeInfo.info(this.anime.id, (error, anime) => {
                     if (error) {
                         log.error(error);

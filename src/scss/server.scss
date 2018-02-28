@@ -1,0 +1,15 @@
+.cursor-pointer {
+    cursor: pointer;
+}
+
+@import "_fonts";
+@import "_theme";
+@import "_switch";
+@import "_start";
+@import "_topbar";
+@import "_info";
+@import "_watch";
+
+body {
+    background-image: radial-gradient(at top, rgba(255, 255, 255, 0.15), transparent 45%), url('../img/bg.png');
+}

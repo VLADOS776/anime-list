@@ -345,6 +345,32 @@ var __vueify_style__ = __vueify_insert__.insert("/* line 3, stdin */\n.read .img
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const Sources = require('../sources');
+
 module.exports = {
     props: ['watch', 'manga'],
     data() {
@@ -358,7 +384,11 @@ module.exports = {
             error: null,
             prevChapterLink: null,
             nextChapterLink: null,
-            chapterUrl: null
+            hasPrevChapter: false,
+            hasNextChapter: true,
+            chapterUrl: null,
+            chapters: null,
+            chapterIndex: 0
         }
     },
     watch: {
@@ -384,10 +414,9 @@ module.exports = {
             
             this.$scrollTo('.imgWrap', 500, {offset: -58});
         },
-        chapterUrl: function(newVal, oldVal) {
-            if (oldVal == null) return;
-            
-            this.loadChapter(newVal);
+        chapterIndex(val) {
+            this.watch.chapter = this.chapters[this.chapters.length - this.chapterIndex - 1].chapter;
+            this.loadChapter();
         }
     },
     computed: {
@@ -400,7 +429,10 @@ module.exports = {
                 'btn-outline-info': !bookmarkHere,
                 'btn-info': bookmarkHere
             }
-        }
+        },
+        chapter() {
+            return this.chapters[this.chapters.length - this.chapterIndex - 1]
+        },
     },
     methods: {
         back: function() {
@@ -411,6 +443,7 @@ module.exports = {
                 volume: this.watch.volume,
                 chapter: this.watch.chapter,
                 page: this.currentPage,
+                chapterIndex: this.chapterIndex,
                 chapterUrl: this.chapterUrl
             }
             
@@ -468,15 +501,25 @@ module.exports = {
                 this.preload[realNum] = true;
             }
         },
-        nextChapter: function() {
-            if (this.nextChapterLink) {
-                this.loadChapter(this.nextChapterLink)
-            }
-        },
         prevChapter: function() {
-            if (this.prevChapterLink) {
-                this.loadChapter(this.prevChapterLink);
+            // TODO: Переделать. chapter - строка.
+            if (this.hasPrevChapter) {
+                this.chapterIndex--;
+                this.loadChapter();
             }
+            /*if (this.nextChapterLink) {
+                this.loadChapter(this.nextChapterLink)
+            }*/
+        },
+        nextChapter: function() {
+            // TODO: Переделать. chapter - строка.
+            if (this.hasNextChapter) {
+                this.chapterIndex++;
+                this.loadChapter();
+            }
+            /*if (this.prevChapterLink) {
+                this.loadChapter(this.prevChapterLink);
+            }*/
         },
         loadChapter: function(url) {
             this.loading = true;
@@ -485,7 +528,8 @@ module.exports = {
                 read: {
                     volume: this.watch.volume,
                     chapter: this.watch.chapter,
-                    page: this.currentPage
+                    page: this.currentPage,
+                    chapterIndex: this.chapterIndex
                 },
                 link: url,
                 action: 'chapter'
@@ -493,9 +537,13 @@ module.exports = {
                 this.loading = false;
                 if (err == null) {
                     this.currentImg = info.image;
-                    this.prevChapterLink = info.prevChapterLink;
-                    this.nextChapterLink = info.nextChapterLink;
+                    this.hasPrevChapter = info.prevChapter;
+                    this.hasNextChapter = info.nextChapter;
                     this.imgArray = info.images;
+                    this.chapters = info.chapters;
+
+                    this.watch.chapter = this.chapter.chapter;
+                    this.watch.volume = this.chapter.volume;
 
                     this.$set(this, 'chapterUrl', info.link);
                     PluginEvent({ type: 'loadChapter', watch: this.watch })
@@ -563,7 +611,7 @@ module.exports = {
                 }
             })
         } else {
-            if (this.manga.source && this.manga.source.match('shikimori')) {
+            /*if (this.manga.source && this.manga.source.match('shikimori')) {
                 mangaInfo.externalLinks(this.manga.id, (err, links) => {
                     if (links && links.length) {
                         let readmanga = links.find(link => link.kind === 'readmanga')
@@ -575,7 +623,7 @@ module.exports = {
                                 if (manga && manga.startReadLink) {
                                     this.loadChapter(manga.startReadLink);
                                 } else {
-                                    this.error = 'Манга была удалена'
+                                    this.error = 'Манга была удалена.';
                                 }
                                 if (manga && manga.chapterLinks && manga.chapterLinks.length) {
                                     this.$set(this.manga, 'chapterList', manga.chapterLinks);
@@ -586,22 +634,22 @@ module.exports = {
                                 this.updateVol_n_Chap(manga);
                             })
                         } else {
-                            this.loading = false;
-                            this.error = 'Не удалось найти ссылку на чтение манги'
+                            //this.loading = false;
+                            //this.error = 'Не удалось найти ссылку на чтение манги';
                         }
                     } else {
                         this.loading = false;
                     }
                 })
-            } else {
+            } else {*/
                 this.loadChapter();
-            }
+            //}
         }
     }
 }
 
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"read\" _v-0a7043e7=\"\">\n    <div class=\"mb-2 d-flex justify-content-between\" _v-0a7043e7=\"\">\n        <button class=\"btn btn-outline-secondary btn-sm\" @click=\"back\" _v-0a7043e7=\"\"><i class=\"fa fa-arrow-left\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Назад</button>\n        <div v-if=\"manga.chapterList &amp;&amp; manga.chapterList.length\" class=\"select-chapter--wrap\" _v-0a7043e7=\"\">\n            <select class=\"form-control select-chapter\" v-model=\"chapterUrl\" _v-0a7043e7=\"\">\n                <option v-for=\"(cp, index) in manga.chapterList\" :value=\"cp.link\" _v-0a7043e7=\"\">{{cp.name}}</option>\n            </select>\n        </div>\n        <button class=\"btn btn-sm\" :class=\"bookmarkClass\" @click=\"bookmark\" _v-0a7043e7=\"\"><i class=\"fa fa-bookmark\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Добавить закладку</button>\n    </div>\n    <div class=\"d-flex justify-content-center\" _v-0a7043e7=\"\">\n        <h5 _v-0a7043e7=\"\">{{manga.russian}}. Том {{watch.volume}} Глава {{watch.chapter}}</h5>\n    </div>\n    <div class=\"imgWrap\" _v-0a7043e7=\"\">\n        <div class=\"load-spinner\" v-if=\"loading\" _v-0a7043e7=\"\"></div>\n        <img :src=\"currentImg\" alt=\"\" v-else=\"\" _v-0a7043e7=\"\">\n        <div v-if=\"error\" _v-0a7043e7=\"\">\n            <span class=\"text-danger\" _v-0a7043e7=\"\">{{error}}</span>\n        </div>\n    </div>\n    <div class=\"d-flex justify-content-between mt-3 mb-3\" _v-0a7043e7=\"\">\n        <div class=\"d-flex flex-column\" _v-0a7043e7=\"\">\n            <button class=\"btn btn-outline-warning\" :class=\"{disabled: currentPage === 1}\" v-shortkey.once=\"{arrow: ['arrowleft']}\" @shortkey=\"prevPage\" @click=\"prevPage\" _v-0a7043e7=\"\">\n                    <i class=\"fa fa-arrow-left\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Предыдущая страница\n            </button>\n            <button v-if=\"prevChapterLink\" class=\"btn btn-outline-primary mt-2\" :class=\"{disabled: watch.chapter === 1 || !prevChapterLink}\" @click=\"prevChapter\" _v-0a7043e7=\"\">\n                    <i class=\"fa fa-arrow-left\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Предыдущая глава\n            </button>\n        </div>\n        <div class=\"select-wrap\" _v-0a7043e7=\"\">\n            Страница\n            <select class=\"form-control select-page\" v-model=\"currentPage\" _v-0a7043e7=\"\">\n                <option v-for=\"pageNum in totalPages\" :value=\"pageNum\" _v-0a7043e7=\"\">{{pageNum}}</option>\n            </select>\n            из {{totalPages}}\n        </div>\n        <div class=\"d-flex flex-column\" _v-0a7043e7=\"\">\n            <button class=\"btn btn-outline-warning\" :class=\"{disabled: currentPage === totalPages}\" v-shortkey.once=\"{arrow: ['arrowright']}\" @shortkey=\"nextPage\" @click=\"nextPage\" _v-0a7043e7=\"\">\n                    <i class=\"fa fa-arrow-right\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Следующая страница\n            </button>\n            <button v-if=\"nextChapterLink\" class=\"btn btn-outline-primary mt-2\" :class=\"{disabled: !nextChapterLink}\" @click=\"nextChapter\" _v-0a7043e7=\"\">\n                <i class=\"fa fa-arrow-right\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Следующая глава\n            </button>\n        </div>\n    </div>\n</div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"read\" _v-0a7043e7=\"\">\n    <div class=\"mb-2 d-flex justify-content-between\" _v-0a7043e7=\"\">\n        <button class=\"btn btn-outline-secondary btn-sm\" @click=\"back\" _v-0a7043e7=\"\"><i class=\"fa fa-arrow-left\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Назад</button>\n        <div v-if=\"chapters &amp;&amp; chapters.length\" class=\"select-chapter--wrap\" _v-0a7043e7=\"\">\n            <select class=\"form-control select-chapter\" v-model=\"chapterIndex\" _v-0a7043e7=\"\">\n                <option v-for=\"(cp, index) in chapters\" :value=\"chapters.length - index - 1\" :key=\"cp.chapter\" _v-0a7043e7=\"\">{{cp.name}}</option>\n            </select>\n        </div>\n        <button class=\"btn btn-sm\" :class=\"bookmarkClass\" @click=\"bookmark\" _v-0a7043e7=\"\"><i class=\"fa fa-bookmark\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Добавить закладку</button>\n    </div>\n    <div class=\"d-flex justify-content-center\" _v-0a7043e7=\"\">\n        <h5 _v-0a7043e7=\"\">{{manga.russian}}. Том {{watch.volume}} Глава {{watch.chapter}}</h5>\n    </div>\n    <div class=\"imgWrap\" _v-0a7043e7=\"\">\n        <div class=\"load-spinner\" v-if=\"loading\" _v-0a7043e7=\"\"></div>\n        <img :src=\"currentImg\" alt=\"\" v-else=\"\" _v-0a7043e7=\"\">\n        <div v-if=\"error\" _v-0a7043e7=\"\">\n            <span class=\"text-danger\" _v-0a7043e7=\"\">{{error}}</span>\n        </div>\n    </div>\n    <div class=\"d-flex justify-content-between mt-3 mb-3\" _v-0a7043e7=\"\">\n        <div class=\"d-flex flex-column\" _v-0a7043e7=\"\">\n            <button class=\"btn btn-outline-warning\" :class=\"{disabled: currentPage === 1}\" v-shortkey.once=\"{arrow: ['arrowleft']}\" @shortkey=\"prevPage\" @click=\"prevPage\" _v-0a7043e7=\"\">\n                    <i class=\"fa fa-arrow-left\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Предыдущая страница\n            </button>\n            <button v-if=\"hasPrevChapter\" class=\"btn btn-outline-primary mt-2\" :class=\"{disabled: watch.chapter === 1 || !hasPrevChapter}\" @click=\"prevChapter\" _v-0a7043e7=\"\">\n                    <i class=\"fa fa-arrow-left\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Предыдущая глава\n            </button>\n        </div>\n        <div class=\"select-wrap\" _v-0a7043e7=\"\">\n            Страница\n            <select class=\"form-control select-page\" v-model=\"currentPage\" _v-0a7043e7=\"\">\n                <option v-for=\"pageNum in totalPages\" :value=\"pageNum\" :key=\"pageNum\" _v-0a7043e7=\"\">{{pageNum}}</option>\n            </select>\n            из {{totalPages}}\n        </div>\n        <div class=\"d-flex flex-column\" _v-0a7043e7=\"\">\n            <button class=\"btn btn-outline-warning\" :class=\"{disabled: currentPage === totalPages}\" v-shortkey.once=\"{arrow: ['arrowright']}\" @shortkey=\"nextPage\" @click=\"nextPage\" _v-0a7043e7=\"\">\n                    <i class=\"fa fa-arrow-right\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Следующая страница\n            </button>\n            <button v-if=\"hasNextChapter\" class=\"btn btn-outline-primary mt-2\" :class=\"{disabled: !hasNextChapter}\" @click=\"nextChapter\" _v-0a7043e7=\"\">\n                <i class=\"fa fa-arrow-right\" aria-hidden=\"true\" _v-0a7043e7=\"\"></i> Следующая глава\n            </button>\n        </div>\n    </div>\n</div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)

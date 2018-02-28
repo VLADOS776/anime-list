@@ -266,6 +266,7 @@ var __vueify_style__ = __vueify_insert__.insert("\n.container.content[_v-60c36db
 
 
 
+
 const Plugins = require('./plugin');
 
 const TopBar = require('./components/TopBar'),
@@ -277,7 +278,8 @@ const TopBar = require('./components/TopBar'),
       Settings = require('./pages/Settings'),
       Repos = require('./pages/Repos'),
       PluginSearch = require('./pages/PluginSearch'),
-      About = require('./pages/About');
+      About = require('./pages/About'),
+      Loading = require("./pages/Loading");
 
 module.exports = {
     data() {
@@ -294,7 +296,7 @@ module.exports = {
             modalContent: ''
         }
     },
-    components: { TopBar, Start, Anime, Manga, Watch, Read, Settings, Repos, PluginSearch, About },
+    components: { TopBar, Start, Anime, Manga, Watch, Read, Settings, Repos, PluginSearch, About, Loading },
     watch: {
         selected: function(newVal) {
             if ((this.selected.url && this.selected.url.match('/animes')) || this.selected.type === 'anime') {
@@ -370,7 +372,7 @@ module.exports = {
 
                     this.pluginsEmitSelect();
                 } else {
-                    mangaInfo.info(manga, (error, manga) => {
+                    Sources.info({ id: manga, type: 'manga', source: 'shikimori.org' }, (error, manga) => {
                         this.selected = manga;
                         this.currentPage = 'manga'
 

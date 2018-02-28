@@ -2,7 +2,7 @@
     .watching {
         flex-wrap: nowrap;
         overflow-y: hidden;
-        overflow-x: scroll;
+        overflow-x: auto;
         .card {
             flex: 0 0 150px;
             display: inline-flex;

@@ -3,11 +3,11 @@
         <h4>{{selectedHorizontal ? selectedHorizontal.name : ''}} 
             <span class='dropdown-toggle' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'></span>
             <div class='dropdown-menu'>
-                <a v-for='item in dropdownHorizontal' href="#" class="dropdown-item" @click='selectedHorizontal = item'>{{item.name}}</a>
+                <a v-for='item in dropdownHorizontal' href="#" class="dropdown-item" @click='selectedHorizontal = item' :key="item.name">{{item.name}}</a>
             </div>
         </h4>
         <div class="watching d-flex mb-3 pb-2" v-if='horisontalList && horisontalList.length'>
-            <div class="card" v-for='anime in horisontalList' key='anime.russian' @click="select_anime(anime)">
+            <div class="card" v-for='anime in horisontalList' :key='anime.russian' @click="select_anime(anime)">
                 <img :src="anime.cover || 'https://shikimori.org/' +anime.image.original" :alt="anime.name" class='card-img' @error='card_error'>
                 <div class="card-body card-img-overlay">
                     <h4 class="card-title">{{anime.russian}}</h4>
@@ -23,7 +23,7 @@
         <template v-if="all_anime && all_anime.length">
             <div class="cards-wrap">
                 <b-card-group columns>
-                    <div class="card" v-for='anime in all_anime' key='anime.russian' @click="select_anime(anime)">
+                    <div class="card" v-for='anime in all_anime' :key='anime.russian' @click="select_anime(anime)">
                         <img :src="anime.cover || 'https://shikimori.org/' +anime.image.original" :alt="anime.name" class='card-img' @error='card_error'>
                         <div class="card-body card-img-overlay">
                             <h4 class="card-title">{{anime.russian}}</h4>
@@ -40,8 +40,8 @@
         <template v-if="all_manga && all_manga.length">
             <div class="cards-wrap">
                 <b-card-group columns>
-                    <div class="card" v-for='manga in all_manga' key='manga.russian' @click="select_manga(manga)">
-                        <img :src="'https://shikimori.org/' +manga.image.original" :alt="manga.name" class='card-img' @error='card_error'>
+                    <div class="card" v-for='manga in all_manga' :key='manga.russian' @click="select_manga(manga)">
+                        <img :src="manga.cover || 'https://shikimori.org/' +manga.image.original" :alt="manga.name" class='card-img' @error='card_error'>
                         <div class="card-body card-img-overlay">
                             <h4 class="card-title">{{manga.russian}}</h4>
                             <h6 class="card-subtitle mb-2 text-muted">{{manga.name}}</h6>
@@ -57,7 +57,8 @@
 </template>
 
 <script>
-    const Mixins = require('../Mixin');
+    const Mixins = require('../Mixin'),
+          config = require('../js/config');
 
     module.exports = {
         props: ['all_anime', 'all_manga'],
@@ -65,7 +66,7 @@
         data: function() {
             return {
                 selectedHorizontal: null,
-                droppedTime: 1000 * 60 * 60 * 24 * 18, // 2.5 weeks
+                droppedTime: config.get('anime.dropTime', 18) * config.get('anime.dropTimeMultiply', 1000 * 60 * 60 * 24), // 2.5 weeks
                 dropdownHorizontal: [
                     { 
                         name: 'Смотрю',

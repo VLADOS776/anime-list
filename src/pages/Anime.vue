@@ -43,22 +43,22 @@
         <div class="description" v-if="anime.description"><b>Описание:</b> <p v-html="cleanDescr()"></p></div>
         <div v-if='anime.source' class='text-muted text-right'><small>Источник: {{anime.sourceHost}}</small></div>
         <div v-if="anime.external_links" class="external_links d-flex justify-content-around">
-            <a v-for='link in anime.external_links' href="#" @click="browser(link.url)">{{ link.name }}</a>
+            <a v-for='link in anime.external_links' href="#" @click="browser(link.url)" :key="link.name">{{ link.name }}</a>
         </div>
         <span v-else-if="anime.source.match('shikimori')" @click="showExternalLinks" class='text-secondary cursor-pointer'>Показать ссылки на сайты</span>
         <template v-if="config.get('anime.showNotes', true) && Object.keys(anime.notes).length">
             <hr>
             <h5>Заметки</h5>
             <ul class='notes'>
-                <li v-for='(note, ep) in anime.notes' v-if="note.length">Эпизод {{ep}}: {{note}}</li>
+                <li v-for='(note, ep) in anime.notes' v-if="note.length" :key="ep">Эпизод {{ep}}: {{note}}</li>
             </ul>
         </template>
         <template v-if="config.get('anime.showMedia', true) && hasMedia">
             <hr>
             <h5>Медиа</h5>
             <div class="screensVideo">
-                <media :preview="screen.preview" :full="screen.original" v-for="screen in anime.screenshots"></media>
-                <media :preview="video.image_url" :full="video.player_url" v-for="video in anime.videos" key="video.id"></media>
+                <media :preview="screen.preview" :full="screen.original" v-for="screen in anime.screenshots" :key="screen.preview"></media>
+                <media :preview="video.image_url" :full="video.player_url" v-for="video in anime.videos" :key="video.image_url"></media>
             </div>
         </template>
         <relate v-if="config.get('anime.showRelated', true) && anime.related" :relate_list="anime.related"></relate>
@@ -210,17 +210,8 @@
                 })
             },
             whenSelect: function() {
-                if (!this.anime.source || this.anime.source.match(/shikimori/)) {
-                    if (config.get('anime.showRelated', true)) {
-                        animeInfo.related(this.anime.id, (error, related) => {
-                            if (related) {
-                                this.$set(this.anime, 'related', related);
-                            }
-                        })
-                    }
-                }
-
                 if (this.anime.inDB && this.anime.next_episode_at && new Date(this.anime.next_episode_at) - Date.now() < 0) {
+                    // TODO: Переделать через Source
                     animeInfo.info(this.anime.id, (error, anime) => {
                         if (error) {
                             log.error(error);

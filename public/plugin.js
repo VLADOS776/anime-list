@@ -132,11 +132,15 @@ Plugin.prototype.newSource = function(opt, source) {
     source.name = opt.name;
     source.version = opt.version;
     source.id = opt.id;
+    source.active = config.get('plugins.' + opt.id.replace(/\./g, '-') + '.active', true)
 
     sourceList[opt.type].push(source);
 
-    if (config.get('sources.' + opt.id.replace(/\./g, '-') + '.active', true)) {
+    if (source.active) {
         if (typeof source.init === 'function') source.init(sendToPlug);
+        source.$isInit = true;
+    } else {
+        source.$isInit = false;
     }
 }
 
@@ -203,14 +207,21 @@ Plugin.prototype.require = function(name) {
  * @returns {(Object|null)} - Плагин
  */
 Plugin.prototype.getPlugin = function(id) {
-    if (this.hasPlugin({ id: id })) {
-        for (let i = 0; i < pluginList.length; i++) {
-            if (pluginList[i].id === id) {
-                return pluginList[i]
-            }
-        }
-    }
-    return null;
+    return pluginList.find(plug => plug.id === id) || null;
+}
+
+/**
+ * Получить источник по id.
+ * Доступно с версии 1.7.0
+ * 
+ * @param {string} id ID источника
+ * @param {string} [type] Тип источника (anime, manga)
+ * @returns {(Object|null)} Плагин
+ */
+Plugin.prototype.getSource = function(id, type) {
+    return type ?
+        sourceList[type].find(source => source.id === id) || null :
+        this.getSource(id, 'anime') || this.getSource(id, 'manga');
 }
 
 /**
@@ -235,17 +246,46 @@ Plugin.prototype.getAllSources = function() {
  * Загрузить все плагины. Срабатывает при старте программы
  */
 Plugin.prototype.loadAllPlugins = function() {
-    let pluginDirPath = path.join(app.getPath('userData'), 'plugins');
+    // Загружаем встроенные плагины
+    let pluginDirPath = path.join(__dirname, 'plugins');
+
+    let pluginFiles = getPluginsPaths(pluginDirPath);
+
+    pluginFiles.forEach((file) => {
+        require(file)(PluginManager, {
+            dir: path.dirname(file),
+            file: file
+        });
+    })
+
+    // Загружаем пользовательские плагины
+    pluginDirPath = path.join(app.getPath('userData'), 'plugins');
     if (!fs.existsSync(pluginDirPath)) {
-        fs.mkdirSync(path.join(app.getPath('userData'), 'plugins'))
+        fs.mkdirSync(pluginDirPath)
     }
-    let plugins = fs.readdirSync(pluginDirPath);
+
+    pluginFiles = getPluginsPaths(pluginDirPath);
+
+    pluginFiles.forEach((file) => {
+        require(file)(PluginManager, {
+            dir: path.dirname(file),
+            file: file
+        });
+    })
+}
+
+/**
+ * Сканирует указанную папку на наличие плагинов.
+ * @param {string} dir - Путь до корневой папки
+ * @returns {(string|Array)} Массив путей до плагинов
+ */
+function getPluginsPaths(dir) {
+    let plugins = fs.readdirSync(dir);
 
     let pluginFiles = [];
 
-
     plugins.forEach((plugin) => {
-        let filePath = path.join(pluginDirPath, plugin);
+        let filePath = path.join(dir, plugin);
 
         if (fs.lstatSync(filePath).isDirectory()) {
             let dirFiles = fs.readdirSync(filePath);
@@ -261,12 +301,7 @@ Plugin.prototype.loadAllPlugins = function() {
         }
     })
 
-    pluginFiles.forEach((file) => {
-        require(file)(PluginManager, {
-            dir: path.dirname(file),
-            file: file
-        });
-    })
+    return pluginFiles
 }
 
 /**
@@ -291,17 +326,36 @@ Plugin.prototype._setApp = function(app) {
 }
 
 Plugin.prototype._setActive = function(plugID, status) {
-    let plug = pluginList.find(el => el.opt.id === plugID);
+    let plug = this.getPlugin(plugID);
 
     if (plug) {
         if (status) {
             if (!plug.plug.$isInit && typeof plug.plug.init === 'function') {
-                plug.plug.init();
+                let sendToPlug = {};
+                if (Array.isArray(plug.opt.dependencies)) {
+                    sendToPlug.dependencies = loadDep(plug.opt.dependencies);
+                }
+                sendToPlug.app = vueApp;
+
+                plug.plug.init(sendToPlug);
                 plug.plug.$isInit = true;
             }
             if (typeof plug.plug.mount === 'function') plug.plug.mount(vueApp);
         } else {
             if (typeof plug.plug.demount === 'function') plug.plug.demount(vueApp);
+        }
+    } else {
+        let source = this.getSource(plugID);
+        if (source && status) {
+            if (!source.$isInit && typeof source.init === 'function') {
+                let sendToPlug = {};
+                if (Array.isArray(source.opt.dependencies)) {
+                    sendToPlug.dependencies = loadDep(source.opt.dependencies);
+                }
+
+                source.init(sendToPlug);
+                source.$isInit = true;
+            }
         }
     }
 }

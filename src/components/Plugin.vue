@@ -1,7 +1,8 @@
 <template>
     <div class='row mb-4 plugin'>
         <div class='col-sm-10 d-flex align-items-center'>
-            <img v-if='icon_src != null' :src="icon_src" :alt="plugin.name + ' icon'" class='plugin__icon'>
+            <img v-if='icon_src != null' :src="icon_src" :alt="plugin.name + ' icon'" class='plugin__icon d-none d-md-block'>
+            <div v-else style='width: 70px; margin-right: 1rem;' class='d-none d-md-block'></div>
             <div class='d-flex flex-column'>
                 <h5 class='plugin__name'>{{plugin.name}} <small class='plugin__version'>v{{plugin.version}}</small></h5>
                 <small class='plugin__author text-muted'>{{plugin.opt.author}}</small>

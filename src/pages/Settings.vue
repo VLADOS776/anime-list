@@ -1,11 +1,57 @@
 <template>
     <div class="settings">
         <ul class="nav nav-tabs" role='tablist'>
-            <li v-for='(tab, index) in tabs' class='nav-item'>
+            <li v-for='(tab, index) in tabs' :key="tab.name" class='nav-item'>
                 <a :href="tab.pane" class='nav-link' :class="{ 'active': index === 0}" data-toggle='tab'>{{tab.name}} <b-badge pill variant='success'>{{tab.badge}}</b-badge></a>
             </li>
         </ul>
         <div class="tab-content p-3">
+            <div class="tab-pane fade" id="anime-pane">
+                <div class="row">
+                    <div class='col-sm-5 text-right'>
+                        Показывать раздел "Связанное":
+                    </div>
+                    <div class='col-sm-7'>
+                        <label class="switch">
+                            <input type="checkbox" v-model='showRelated'>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class='col-sm-5 text-right'>
+                        Показывать раздел "Медиа":
+                    </div>
+                    <div class='col-sm-7'>
+                        <label class="switch">
+                            <input type="checkbox" v-model='showMedia'>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class='col-sm-5 text-right'>
+                        Показывать раздел "Заметки":
+                    </div>
+                    <div class='col-sm-7'>
+                        <label class="switch">
+                            <input type="checkbox" v-model='showNotes'>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class='col-sm-5 text-right'>
+                        Перемещать аниме в "Брошено" через: 
+                    </div>
+                    <div class='col-sm-7'>
+                        <div class="input-group" style='max-width: 180px'>
+                            <input class='form-control' type="number" v-model="animeDropTime">
+                            <div class="input-group-append">
+                                <select class='form-control' v-model="animeDropMultiply" style='width: 110px'>
+                                    <option :value="1000 * 60 * 60 * 24">Дней</option>
+                                    <option :value="1000 * 60 * 60 * 24 * 7">Недель</option>
+                                    <option :value="1000 * 60 * 60 * 24 * 30">Месяцев</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="tab-pane fade" id="server-pane">
                 <div class="row">
                     <div class="col-sm-3">
@@ -25,37 +71,6 @@
                     <div class="mt-3" style='margin: auto'>
                         <button class="btn btn-success" v-if='!server.active' @click='toggleServer'>Включить сервер</button>
                         <button class="btn btn-danger" v-if='server.active' @click='toggleServer'>Выключить сервер</button>
-                    </div>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="anime-pane">
-                <div class="row">
-                    <div class='col-sm-4 text-right'>
-                        Показывать раздел "Связанное":
-                    </div>
-                    <div class='col-sm-8'>
-                        <label class="switch">
-                            <input type="checkbox" v-model='showRelated'>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div class='col-sm-4 text-right'>
-                        Показывать раздел "Медиа":
-                    </div>
-                    <div class='col-sm-8'>
-                        <label class="switch">
-                            <input type="checkbox" v-model='showMedia'>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div class='col-sm-4 text-right'>
-                        Показывать раздел "Заметки":
-                    </div>
-                    <div class='col-sm-8'>
-                        <label class="switch">
-                            <input type="checkbox" v-model='showNotes'>
-                            <span class="slider round"></span>
-                        </label>
                     </div>
                 </div>
             </div>
@@ -146,6 +161,8 @@ module.exports = {
     components: { Plugin },
     data: function() {
         return {
+            animeDropTime: config.get('anime.dropTime', 18),
+            animeDropMultiply: config.get('anime.dropTimeMultiply', 1000 * 60 * 60 * 24),
             server: server,
             serverPort: config.get('server.port', 3000),
             localIP: null,
@@ -158,12 +175,12 @@ module.exports = {
             sourceList: Plugins.getAllSources(),
             tabs: [
                 { 
-                    name: 'Сервер',
-                    pane: '#server-pane'
-                },
-                { 
                     name: 'Аниме',
                     pane: '#anime-pane'
+                },
+                { 
+                    name: 'Сервер',
+                    pane: '#server-pane'
                 },
                 { 
                     name: 'Плагины',
@@ -177,6 +194,14 @@ module.exports = {
         }
     },
     watch: {
+        animeDropTime: function() {
+            if (!isNaN(this.animeDropTime)) {
+                config.set('anime.dropTime', this.animeDropTime);
+            }
+        },
+        animeDropMultiply: function() {
+            config.set('anime.dropTimeMultiply', this.animeDropMultiply);
+        },
         serverPort: function() {
             config.set('server.port', parseInt(this.serverPort));
         },

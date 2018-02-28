@@ -8,12 +8,11 @@ var remote = require('electron').remote,
     path = require('path'),
     compareVersions = require('compare-versions');
 
-
 const Vue = require('../node_modules/vue/dist/vue');
 const App = require('./App');
+require('./polyfills');
 
 var db = require('./js/db.js'),
-    online = require('./js/online'),
     shikimori = require('./js/shikimoriInfo'),
     {anime: animeInfo, manga: mangaInfo} = require('./js/shikimoriInfo'),
     subtitles = require('./js/subtitles'),
@@ -40,9 +39,9 @@ const clientID = require("os").userInfo().username;
 var DEV = true;
 
 server.on('watched', function(data) {
-    let anime = app.allAnime.find((anime) => {
+    let anime = app.$children[0].allAnime.find((anime) => {
         if (data.query.id) {
-            return anime.id === data.query.id
+            return anime.id == data.query.id
         } else if (data.query.name && data.query.source) {
             return anime.name == data.query.name && anime.source == data.query.source
         }
@@ -70,16 +69,17 @@ ipcRenderer.on('adblock', (event, arg) => {
 /* === TODO LIST ===
 ** TODO: Логин на shikimori и импорт списков.
 ** TODO: Собирать информацию с разных источников. Для сверки использовать название и год выпуска.
+** TODO: Поиск по Shikimori сделать в виде плагинов, установленых по умолчанию
+** TODO: Разобраться с главами манги. Нельзя связывать число с главой. Т.к. бывают главы 12.5, 13.1 13.2 13.4 и т.д.
 */
 
-Vue.use(require('./js/libs/bootstrap-vue.js'));
+Vue.use(require('bootstrap-vue'));
 Vue.use(require('vue-scrollto'));
 Vue.use(require('./js/libs/vue-shortkey.js'), { prevent: ['input', 'textarea'] });
 
 var app = new Vue({
     el: '#app',
-    template: '<App/>',
-    components: { App },
+    render: h => h(App),
     methods: {
         change_page(page) {
             this.$children[0].change_page(page);
@@ -93,6 +93,9 @@ var app = new Vue({
             set(val) {
                 this.$children[0].selected = val;
             }
+        },
+        App() {
+            return this.$children[0]
         }
     }
 })

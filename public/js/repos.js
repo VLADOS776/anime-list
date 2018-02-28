@@ -2,7 +2,7 @@ const request = require('request'),
       path = require('path'),
       app = require('electron').remote.app,
       fs = require('fs'),
-      unzip = require('unzip'),
+      unzip = require('unzipper'),
       compareVersions = require('compare-versions');
 
 const config = require('./config'),

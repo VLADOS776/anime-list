@@ -1,68 +1,73 @@
 <template>
-    <nav class="navbar fixed-top mb-2 navbar-expand-sm">
-        <a class="navbar-brand" href="#" @click="start_page">Anime List 3.0 <span>v{{appVersion}}</span></a>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item" v-for='item in nav'>
-                    <a href="#" class="nav-link" @click='change_page(item.page)'>{{item.name}} <b-badge pill variant='success'>{{item.badge}}</b-badge></a>
-                </li>
-            </ul>
-        </div>
-        <form class="form-inline">
-            <!-- @blur="clear" @input="onlineSearch" -->
-            <input
-                class="form-control"
-                type="text"
-                placeholder="Поиск"
-                aria-label="Search"
-                v-model="search"
-                @input="onlineSearch"
-                @blur="clear"
-                >
-        </form>
-        <transition name='fade'>
-            <div id="searchResult" v-show="search.length">
-                <span class="header">Локальный поиск:</span>
-                <div class="d-flex">
-                    <ul>
-                        <li class="header header-2">Аниме</li>
-                        <li class="item" v-for="item in searchLocal_anime" @click="select_anime(item)">{{ item.russian }}<br><span>{{ item.name }}</span></li>
-                        <li v-if="searchLocal_anime.length === 0">Ничего не найдено</li>
-                    </ul>
-                    <ul>
-                        <li class="header header-2">Манга</li>
-                        <li class="item" v-for="item in searchLocal_manga" @click="select_manga(item)">{{ item.russian }}<br><span>{{ item.name }}</span></li>
-                        <li v-if="searchLocal_manga.length === 0">Ничего не найдено</li>
-                    </ul>
-                    
-                </div>
-                
-                <span class="header">Онлайн поиск:</span>
-                <div class="d-flex">
-                    <ul>
-                        <li class="header header-2">Аниме</li>
-                        <li v-if="oLoading_anime"><div class='load-spinner small'></div></li>
-                        <li class="item" v-for="item in searchOnline_anime" v-else-if="searchOnline_anime.length > 0" @click="select(item)">
-                            {{ item.russian }}
-                            <span>{{ item.name || item.english }}</span>
-                            <span class='text-muted'>{{item.source}}</span>
-                        </li>
-                        <li v-else>Ничего не найдено</li>
-                    </ul>
-                    <ul>
-                        <li class="header header-2">Манга</li>
-                        <li v-if="oLoading_manga"><div class='load-spinner small'></div></li>
-                        <li class="item" v-for="item in searchOnline_manga" v-else-if="searchOnline_manga.length > 0" @click="select(item)">
-                            {{ item.russian }}
-                            <span>{{ item.name || item.english }}</span>
-                            <span class='text-muted'>{{item.source}}</span>
-                        </li>
-                        <li v-else>Ничего не найдено</li>
-                    </ul>
-                </div>
+    <div>
+        <nav class="navbar fixed-top mb-2 navbar-expand-sm">
+            <a class="navbar-brand" href="#" @click="start_page">Anime List 3.0 <span>v{{appVersion}}</span></a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item" v-for='item in nav' :data-page="item.page" :class="{'active': $root.$children[0].currentPage === item.page}" :key="item.name">
+                        <a href="#" class="nav-link" @click='change_page(item.page)'>{{item.name}} <b-badge pill variant='success'>{{item.badge}}</b-badge></a>
+                    </li>
+                </ul>
             </div>
-        </transition>
-    </nav>
+            <form class="form-inline">
+                <!-- @blur="clear" @input="onlineSearch" -->
+                <input
+                    class="form-control"
+                    type="text"
+                    placeholder="Поиск"
+                    aria-label="Search"
+                    v-model="search"
+                    @input="onlineSearch"
+                    @blur="clear"
+                    >
+            </form>
+            <transition name='fade'>
+                <div id="searchResult" v-show="search.length">
+                    <span class="header">Локальный поиск:</span>
+                    <div class="d-flex">
+                        <ul>
+                            <li class="header header-2">Аниме</li>
+                            <li class="item" v-for="item in searchLocal_anime" @click="select_anime(item)" :key="item.name">{{ item.russian }}<br><span>{{ item.name }}</span></li>
+                            <li v-if="searchLocal_anime.length === 0">Ничего не найдено</li>
+                        </ul>
+                        <ul>
+                            <li class="header header-2">Манга</li>
+                            <li class="item" v-for="item in searchLocal_manga" @click="select_manga(item)" :key="item.name">{{ item.russian }}<br><span>{{ item.name }}</span></li>
+                            <li v-if="searchLocal_manga.length === 0">Ничего не найдено</li>
+                        </ul>
+                        
+                    </div>
+                    
+                    <span class="header">Онлайн поиск:</span>
+                    <div class="d-flex">
+                        <ul>
+                            <li class="header header-2">Аниме</li>
+                            <li v-if="oLoading_anime"><div class='load-spinner small'></div></li>
+                            <li class="item" v-for="item in searchOnline_anime" v-else-if="searchOnline_anime.length > 0" :key="item.name || item.russian" @click="select(item)">
+                                {{ item.russian }}
+                                <span>{{ item.name || item.english }}</span>
+                                <span class='text-muted'>{{item.source}}</span>
+                            </li>
+                            <li v-else>Ничего не найдено</li>
+                        </ul>
+                        <ul>
+                            <li class="header header-2">Манга</li>
+                            <li v-if="oLoading_manga"><div class='load-spinner small'></div></li>
+                            <li class="item" v-for="item in searchOnline_manga" v-else-if="searchOnline_manga.length > 0"  :key="item.name || item.russian" @click="select(item)">
+                                {{ item.russian }}
+                                <span>{{ item.name || item.english }}</span>
+                                <span class='text-muted'>{{item.source}}</span>
+                            </li>
+                            <li v-else>Ничего не найдено</li>
+                        </ul>
+                    </div>
+                </div>
+            </transition>
+        </nav>
+
+        <Loading v-if='globalLoading'></Loading>
+    </div>
+
 </template>
 
 <script>
@@ -72,9 +77,12 @@ const emitter = require('../emitter'),
       Sources = require('../sources'),
       repos = require('../js/repos');
 
+const Loading = require('../components/Loading');
+
 module.exports = {
     mixins: [Mixins.selectItem],
     props: ['allanime', 'all_manga'],
+    components: { Loading },
     data: function() {
         return {
             search: '',
@@ -87,7 +95,8 @@ module.exports = {
             nav: [
                 { name: 'Настройки', page: 'settings' },
                 { name: 'О программе', page: 'about' }
-            ]
+            ],
+            globalLoading: false
         }
     },
     computed: {
@@ -126,11 +135,13 @@ module.exports = {
                 distance: 100,
                 maxPatternLength: 32,
                 minMatchCharLength: 1,
-                keys: [ "name", "russian" ]
+                keys: [ "name", "english", "russian" ]
             };
             
             // Ждем, пока пользователь наберет весь запрос
             this.onlineSearchTimeout = setTimeout(function() {
+                if (self.search === '') return;
+                
                 Sources.search(self.search, function(results) {
                     if (results.length) {
                         if (results[0].type === 'anime') {
@@ -166,27 +177,29 @@ module.exports = {
             }, 150)
         },
         select: function(item) {
-            if (item.source === 'shikimori.org') {
-                if (item.type === 'anime') {
-                    this.select_anime(item.id);
-                } else {
-                    this.select_manga(item.id);
+            let loadingPageTimeout = setTimeout(_ => {
+                this.globalLoading = true;
+            }, 300);
+            Sources.info(item, (err, info) => {
+                clearTimeout(loadingPageTimeout);
+
+                if (this.globalLoading) {
+                    setTimeout(_ => {
+                        this.globalLoading = false;
+                    }, 100)
                 }
-            } else {
-                Sources.info(item, info => {
-                    if (info == null) {
-                        return;
-                    }
-                    this.$root.selected = info;
-                    if (info.type == 'anime') {
-                        this.change_page('anime');
-                    } else if (info.type === 'manga') {
-                        this.change_page('manga');
-                    } else {
-                        this.change_page(info.type);
-                    }
-                })
-            }
+                if (info == null) {
+                    return;
+                }
+                this.$root.selected = info;
+                if (info.type == 'anime') {
+                    this.change_page('anime');
+                } else if (info.type === 'manga') {
+                    this.change_page('manga');
+                } else {
+                    this.change_page(info.type);
+                }
+            })
         }
     },
     watch: {
@@ -209,75 +222,7 @@ module.exports = {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
     @import "../scss/_theme";
-
-    .navbar {
-        background: url(img/bg.png);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-        .navbar-brand {
-            color: #FCE397;
-            font-family: "Cricket";
-            span {
-                font-size: 0.55rem;
-                color: #616161;
-            }
-        }
-        .navbar-nav {
-            .nav-item a {
-                color: #fff
-            }
-        }
-        #searchResult {
-            z-index: 3;
-            position: absolute;
-            background: $dark;
-            padding: 3px 10px;
-            right: 1rem;
-            border: 3px solid $dark2;
-            outline: 1px solid $dark3;
-            top: 3.5rem;
-            min-width: 230px;
-            overflow-y: auto;
-            max-height: 500px;
-            ul {
-                flex-grow: 1;
-                padding: 0 10px;
-                list-style: none;
-            }
-            .header {
-                font-weight: bold;
-                border-bottom: 1px solid $dark2;
-                margin-top: 7px;
-                margin-bottom: 2px;
-                color: $fontColor2;
-                display: block;
-                &-2 {
-                    text-align: center;
-                }
-            }
-            .header:first-child {
-                margin-top: 0;
-            }
-            .item {
-                cursor: pointer;
-                transition: 0.2s;
-                padding: 2px 4px;
-                max-width: 300px;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-                border-radius: 2px;
-                color: $fontColor;
-                &:hover {
-                    background: $dark2;
-                }
-                span {
-                    font-size: .8rem;
-                    margin-top: -2px;
-                    display: block;
-                }
-            }
-        }
-    }
+    @import "../scss/_topbar.scss";
 </style>

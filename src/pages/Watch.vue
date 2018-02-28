@@ -34,21 +34,21 @@
                         <b-tabs ref="tabs">
                             <b-tab title="Озвучка"  v-if='videos.fandub && videos.fandub.length' active>
                                 <ul class="video-players fandub">
-                                    <li v-for="video in videos.fandub" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
+                                    <li v-for="video in videos.fandub" :key="video.video_id" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
                                         <span>{{ video.author || watch.ep + ' серия' }}</span><span class="hosting">{{ video.hosting }}</span>
                                     </li>
                                 </ul>
                             </b-tab>
                             <b-tab title="Субтитры" v-if='videos.sub && videos.sub.length'>
                                 <ul class="video-players sub">
-                                    <li v-for="video in videos.sub" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id, eng: video.kindClass && video.kindClass.indexOf('english') !== -1}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
+                                    <li v-for="video in videos.sub" :key="video.video_id" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id, eng: video.kindClass && video.kindClass.indexOf('english') !== -1}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
                                         <span>{{ video.author || watch.ep + ' серия' }}</span><span class="hosting">{{ video.hosting }}</span>
                                     </li>
                                 </ul>
                             </b-tab>
                             <b-tab title="Оригинал" v-if='videos.raw && videos.raw.length'>
                                 <ul class="video-players raw">
-                                    <li v-for="video in videos.raw" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
+                                    <li v-for="video in videos.raw" :key="video.video_id" v-if="video.author && video.author.length" :class="{active: video.video_id === videos.player.video_id}" @click="change_videoId(video.video_id)" class="d-flex justify-content-between">
                                         <span>{{ video.author || watch.ep + ' серия' }}</span><span class="hosting">{{ video.hosting }}</span>
                                     </li>
                                 </ul>
@@ -56,7 +56,7 @@
                         </b-tabs>
                     </b-card>
                     <select id="select-ep" class="form-control" v-model="watch.ep">
-                        <option v-for="epNum in anime.episodes_aired" :value="epNum" @click="watch.video_id=null">{{epNum}} серия</option>
+                        <option v-for="epNum in anime.episodes_aired" :value="epNum" @click="watch.video_id=null" :key="epNum">{{epNum}} серия</option>
                     </select>
                 </div>
 
@@ -66,7 +66,7 @@
                         <b-tabs ref='tabs'>
                             <b-tab title='Файлы в папке' active>
                                 <ul class="video-players local">
-                                    <li v-for="file in anime.localFiles" class="d-flex justify-content-between" :class='{active: file == localFile}' @click='localFile = file'>
+                                    <li v-for="file in anime.localFiles" class="d-flex justify-content-between" :key="file.name" :class='{active: file == localFile}' @click='localFile = file'>
                                         <span>{{file.name}}</span>
                                     </li>
                                 </ul>
@@ -351,121 +351,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
     @import "../scss/_theme";
-
-    .watch, .watch-style {
-        .player-contaier {
-            max-height: 625px;
-            position: relative;
-            /*overflow: visible;
-            &:after {
-                content: '';
-                position: absolute;
-                z-index: -2;
-                box-shadow: 0 26px 15px rgba(0, 0, 0, 0.35);
-                bottom: 0;
-                left: 10px;
-                right: 10px;
-                border-radius: 100%;
-                height: 20px;
-            }*/
-        }
-        .video-variants {
-            padding: 0;
-            .card {
-                background-color: $bgTransparent;;
-                
-                .nav-tabs {
-                    justify-content: space-between;
-                    .nav-item a {
-                        color: #fff;
-                        &.active, &:hover {
-                            color: $primaryColor;
-                        }
-                    }
-                }
-                
-                .video-players {
-                    list-style: none;
-                    line-height: 1.4rem;
-                    padding: 0;
-                    margin: 0;
-                    max-height: 312px;
-                    overflow-y: auto;
-                    
-                    @media (max-width: 1200px) {
-                        max-height: 243px;
-                    }
-
-                    li {
-                        padding: 2px;
-                        padding-left: 10px;
-                        cursor: pointer;
-                        font-size: 0.9rem;
-                        word-break: break-all;
-                        &.active, &.selected {
-                            background-color: $primaryColor;
-                            color: $dark;
-                            a {
-                                color: $dark;
-                            }
-                        }
-                        &:hover, a:hover {
-                            background-color: lighten($primaryColor, 10);
-                            color: $dark;
-                            text-decoration: none;
-                        }
-                        .hosting {
-                            font-size: 0.7rem;
-                            color: #828282;
-                            white-space: nowrap;
-                            text-align: right;
-                        }
-                        &.eng:after {
-                            content: 'English';
-                            margin-right: 5px;
-                            font-size: 0.7rem;
-                            float: right;
-                            vertical-align: middle;
-                            color: #97cdfc;
-                        }
-                        a {
-                            color: #fff;
-                            text-decoration: none;
-                        }
-                    }
-                    
-                    &::-webkit-scrollbar-thumb {
-                        background: $primaryColor;
-                        -webkit-border-radius: 10px;
-                    }
-
-                    &::-webkit-scrollbar-track {
-                        -webkit-box-shadow: inset 0 0 6px #a7a7a7;
-                        -webkit-border-radius: 10px;
-                        /* margin: 10px 0; */
-                    }
-
-                    &::-webkit-scrollbar {
-                        width: 5px;
-                    }
-
-                }
-            }
-        }
-        #select-ep {
-            margin-top: 1rem;
-        }
-
-        /* Субтитры у видео */
-        $stroke: 2px;
-        ::cue {
-            background: transparent;
-            text-shadow: #000 0px 0px $stroke,   #000 0px 0px $stroke,   #000 0px 0px $stroke,
-            #000 0px 0px $stroke,   #000 0px 0px $stroke,   #000 0px 0px $stroke;
-            font-family: Tahoma;
-            font-weight: bold;
-        }
-    }
+    @import "../scss/_watch.scss";
 </style>

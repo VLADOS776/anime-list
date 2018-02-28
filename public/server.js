@@ -1,6 +1,5 @@
 const config = require('./js/config'),
       db = require('./js/db'),
-      online = require('./js/online'),
       {anime: animeInfo} = require('./js/shikimoriInfo'),
       Sources = require('./sources')
 
@@ -150,10 +149,6 @@ Server.prototype.start = function() {
             }, (watchObj, err) => {
                 res.render('watch', { anime: anime, watch: watch, videos: watchObj, injected: injectedList })
             })
-
-            /*online.getPlayers(anime.id, watch.ep, watch.videoId, function(vids) {
-                res.render('watch', { anime: anime, watch: watch, videos: vids, injected: injectedList})
-            })*/
         }
     })
     

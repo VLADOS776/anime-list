@@ -7,14 +7,14 @@
                 <select class='form-control' id='category' v-model="selected_category">
                     <option value="all">Все</option>
                     <option value="sources">Источники</option>
-                    <option v-for='category in allCat' :value="category">{{category}}</option>
+                    <option v-for='category in allCat' :key="category" :value="category">{{category}}</option>
                 </select>
             </div>
             <div class="col-sm-6 col-lg-4 d-flex align-items-baseline">
                 <label for="repo" class='mr-2'>Репозиторий: </label>
                 <select id="repo" class='form-control' v-model="selected_repo">
                     <option value="all">Все</option>
-                    <option v-for="repo in allRepos" :value="repo.name">{{repo.name}}</option>
+                    <option v-for="repo in allRepos" :key="repo.name" :value="repo.name">{{repo.name}}</option>
                 </select>
             </div>
         </div>

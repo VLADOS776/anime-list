@@ -6,10 +6,13 @@
             </div>
             <div class="right-side d-flex flex-column justify-content-around">
                 <div>
-                    <h5 v-if="manga.russian">{{ manga.russian }} <small class='text-muted' v-if="manga.aired_on">{{ new Date(manga.aired_on).getFullYear() }}</small></h5>
+                    <h5 v-if="manga.russian">{{ manga.russian }} 
+                        <small class='text-muted' v-if="manga.aired_on">{{ new Date(manga.aired_on).getFullYear() }}</small>
+                        <small class='text-muted' v-else-if="manga.year">{{ manga.year }}</small>
+                        </h5>
                     <h6 v-if="manga.name">{{ manga.name }}</h6>
                     <div>
-                        <span class="genre" v-for='genre in manga.genres'>{{ typeof genre === 'string' ? genre : genre.russian }}</span>
+                        <span class="genre" v-for='genre in manga.genres' :key="typeof genre === 'string' ? genre : genre.russian">{{ typeof genre === 'string' ? genre : genre.russian }}</span>
                     </div>
                 </div>
                 <div v-if="manga.kind">Тип: {{manga.kind}}</div>
@@ -30,7 +33,7 @@
         <div class="description" v-if="manga.description"><b>Описание:</b> <p v-html="cleanDescr()"></p></div>
         <div v-if='manga.source' class='text-muted text-right'><small>Источник: {{manga.sourceHost}}</small></div>
         <div v-if="manga.external_links" class="external_links d-flex justify-content-around">
-            <div v-for='link in manga.external_links'>
+            <div v-for='link in manga.external_links' :key="link.name">
                 <a href="#" @click="browser(link.url)">{{ link.name }}</a>
             </div>
         </div>

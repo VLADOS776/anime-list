@@ -2,9 +2,9 @@
     <div class="read">
         <div class='mb-2 d-flex justify-content-between'>
             <button class="btn btn-outline-secondary btn-sm" @click="back"><i class="fa fa-arrow-left" aria-hidden="true"></i> Назад</button>
-            <div v-if="manga.chapterList && manga.chapterList.length" class="select-chapter--wrap">
-                <select class="form-control select-chapter" v-model="chapterUrl">
-                    <option v-for="(cp, index) in manga.chapterList" :value="cp.link">{{cp.name}}</option>
+            <div v-if="chapters && chapters.length" class="select-chapter--wrap">
+                <select class="form-control select-chapter" v-model="chapterIndex">
+                    <option v-for="(cp, index) in chapters" :value="chapters.length - index - 1" :key="cp.chapter">{{cp.name}}</option>
                 </select>
             </div>
             <button class='btn btn-sm' :class="bookmarkClass" @click='bookmark'><i class="fa fa-bookmark" aria-hidden="true"></i> Добавить закладку</button>
@@ -30,9 +30,9 @@
                         <i class="fa fa-arrow-left" aria-hidden="true"></i> Предыдущая страница
                 </button>
                 <button
-                    v-if="prevChapterLink"
+                    v-if="hasPrevChapter"
                     class="btn btn-outline-primary mt-2"
-                    :class="{disabled: watch.chapter === 1 || !prevChapterLink}"
+                    :class="{disabled: watch.chapter === 1 || !hasPrevChapter}"
                     @click="prevChapter">
                         <i class="fa fa-arrow-left" aria-hidden="true"></i> Предыдущая глава
                 </button>
@@ -40,7 +40,7 @@
             <div class="select-wrap">
                 Страница
                 <select class="form-control select-page" v-model="currentPage">
-                    <option v-for="pageNum in totalPages" :value="pageNum">{{pageNum}}</option>
+                    <option v-for="pageNum in totalPages" :value="pageNum" :key="pageNum">{{pageNum}}</option>
                 </select>
                 из {{totalPages}}
             </div>
@@ -54,9 +54,9 @@
                         <i class="fa fa-arrow-right" aria-hidden="true"></i> Следующая страница
                 </button>
                 <button
-                    v-if="nextChapterLink"
+                    v-if="hasNextChapter"
                     class="btn btn-outline-primary mt-2"
-                    :class="{disabled: !nextChapterLink}"
+                    :class="{disabled: !hasNextChapter}"
                     @click="nextChapter">
                     <i class="fa fa-arrow-right" aria-hidden="true"></i> Следующая глава
                 </button>
@@ -66,6 +66,8 @@
 </template>
 
 <script>
+const Sources = require('../sources');
+
 module.exports = {
     props: ['watch', 'manga'],
     data() {
@@ -79,7 +81,11 @@ module.exports = {
             error: null,
             prevChapterLink: null,
             nextChapterLink: null,
-            chapterUrl: null
+            hasPrevChapter: false,
+            hasNextChapter: true,
+            chapterUrl: null,
+            chapters: null,
+            chapterIndex: 0
         }
     },
     watch: {
@@ -105,10 +111,9 @@ module.exports = {
             
             this.$scrollTo('.imgWrap', 500, {offset: -58});
         },
-        chapterUrl: function(newVal, oldVal) {
-            if (oldVal == null) return;
-            
-            this.loadChapter(newVal);
+        chapterIndex(val) {
+            this.watch.chapter = this.chapters[this.chapters.length - this.chapterIndex - 1].chapter;
+            this.loadChapter();
         }
     },
     computed: {
@@ -121,7 +126,10 @@ module.exports = {
                 'btn-outline-info': !bookmarkHere,
                 'btn-info': bookmarkHere
             }
-        }
+        },
+        chapter() {
+            return this.chapters[this.chapters.length - this.chapterIndex - 1]
+        },
     },
     methods: {
         back: function() {
@@ -132,6 +140,7 @@ module.exports = {
                 volume: this.watch.volume,
                 chapter: this.watch.chapter,
                 page: this.currentPage,
+                chapterIndex: this.chapterIndex,
                 chapterUrl: this.chapterUrl
             }
             
@@ -189,15 +198,25 @@ module.exports = {
                 this.preload[realNum] = true;
             }
         },
-        nextChapter: function() {
-            if (this.nextChapterLink) {
-                this.loadChapter(this.nextChapterLink)
-            }
-        },
         prevChapter: function() {
-            if (this.prevChapterLink) {
-                this.loadChapter(this.prevChapterLink);
+            // TODO: Переделать. chapter - строка.
+            if (this.hasPrevChapter) {
+                this.chapterIndex--;
+                this.loadChapter();
             }
+            /*if (this.nextChapterLink) {
+                this.loadChapter(this.nextChapterLink)
+            }*/
+        },
+        nextChapter: function() {
+            // TODO: Переделать. chapter - строка.
+            if (this.hasNextChapter) {
+                this.chapterIndex++;
+                this.loadChapter();
+            }
+            /*if (this.prevChapterLink) {
+                this.loadChapter(this.prevChapterLink);
+            }*/
         },
         loadChapter: function(url) {
             this.loading = true;
@@ -206,7 +225,8 @@ module.exports = {
                 read: {
                     volume: this.watch.volume,
                     chapter: this.watch.chapter,
-                    page: this.currentPage
+                    page: this.currentPage,
+                    chapterIndex: this.chapterIndex
                 },
                 link: url,
                 action: 'chapter'
@@ -214,9 +234,13 @@ module.exports = {
                 this.loading = false;
                 if (err == null) {
                     this.currentImg = info.image;
-                    this.prevChapterLink = info.prevChapterLink;
-                    this.nextChapterLink = info.nextChapterLink;
+                    this.hasPrevChapter = info.prevChapter;
+                    this.hasNextChapter = info.nextChapter;
                     this.imgArray = info.images;
+                    this.chapters = info.chapters;
+
+                    this.watch.chapter = this.chapter.chapter;
+                    this.watch.volume = this.chapter.volume;
 
                     this.$set(this, 'chapterUrl', info.link);
                     PluginEvent({ type: 'loadChapter', watch: this.watch })
@@ -284,7 +308,7 @@ module.exports = {
                 }
             })
         } else {
-            if (this.manga.source && this.manga.source.match('shikimori')) {
+            /*if (this.manga.source && this.manga.source.match('shikimori')) {
                 mangaInfo.externalLinks(this.manga.id, (err, links) => {
                     if (links && links.length) {
                         let readmanga = links.find(link => link.kind === 'readmanga')
@@ -296,7 +320,7 @@ module.exports = {
                                 if (manga && manga.startReadLink) {
                                     this.loadChapter(manga.startReadLink);
                                 } else {
-                                    this.error = 'Манга была удалена'
+                                    this.error = 'Манга была удалена.';
                                 }
                                 if (manga && manga.chapterLinks && manga.chapterLinks.length) {
                                     this.$set(this.manga, 'chapterList', manga.chapterLinks);
@@ -307,16 +331,16 @@ module.exports = {
                                 this.updateVol_n_Chap(manga);
                             })
                         } else {
-                            this.loading = false;
-                            this.error = 'Не удалось найти ссылку на чтение манги'
+                            //this.loading = false;
+                            //this.error = 'Не удалось найти ссылку на чтение манги';
                         }
                     } else {
                         this.loading = false;
                     }
                 })
-            } else {
+            } else {*/
                 this.loadChapter();
-            }
+            //}
         }
     }
 }

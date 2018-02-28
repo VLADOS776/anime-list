@@ -4,7 +4,7 @@
         <div class="row mb-3">
             <button class="btn btn-outline-success" v-b-modal.add-repo-modal>Добавить репозиторий</button>
         </div>
-        <div class='row mb-4 repo' v-for='repo in allRepos'>
+        <div class='row mb-4 repo' v-for='repo in allRepos' :key="repo.name">
             <div class='col-sm-10'>
                 <h5 class='repo__name'>{{repo.name}}</h5>
                 <div class='repo__description'>{{repo.description}}</div>

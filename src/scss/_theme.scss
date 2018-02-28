@@ -12,7 +12,7 @@ $dark3: lighten($dark, 20);
 $bgTransparent: rgba(0, 0, 0, 0.2);
 
 body {
-    background-image: radial-gradient(at top, rgba(255, 255, 255, 0.15), transparent 45%), url('../img/bg.png');
+    background-image: radial-gradient(at top, rgba(255, 255, 255, 0.15), transparent 45%), url('img/bg.png');
     font-family: 'Futura';
     color: $fontColor;
     background-repeat: no-repeat, repeat;

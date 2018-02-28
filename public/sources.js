@@ -21,20 +21,12 @@ module.exports.search = function(opt, callback) {
 
     if (opt.type) {
         sources = sources[opt.type];
-        if (opt.type === 'anime') {
-            searchShikimoriAnime(query, callback);
-        } else if (opt.type === 'manga') {
-            searchShikimoriManga(query, callback);
-        }
     } else {
         sources = Object.keys(sources).map(key => sources[key]);
         sources = [].concat.apply([], sources);
-
-        searchShikimoriAnime(query, callback);
-        searchShikimoriManga(query, callback);
     }
 
-    sources = sources.filter(source => typeof source.search === 'function');
+    sources = sources.filter(source => typeof source.search === 'function' && (source.active === true || typeof source.active === 'undefined'));
 
     sources = sources.map(source => source.search);
 
@@ -58,10 +50,10 @@ module.exports.info = function(item, callback) {
         if (filter && filter.info) {
             filter.info(item, callback);
         } else {
-            callback(null);
+            callback('Источник не найден');
         }
     } else {
-        callback(null);
+        callback('Нет источников этого типа');
     }
 }
 
@@ -76,9 +68,8 @@ module.exports.info = function(item, callback) {
  * @callback callback - Callback
  */
 module.exports.watch = function(info, callback) {
-    if (!info.anime.source || info.anime.source.match('shikimori')) {
-        watchShikimori(info, callback);
-        return;
+    if (!info.anime.source || info.anime.source.match(/shikimori/)) {
+        info.anime.source = 'shikimori.org';
     }
     let type = info.anime.type || 'anime';
     let sources = Plugins.getAllSources();
@@ -107,13 +98,13 @@ module.exports.watch = function(info, callback) {
  * @callback callback - Callback
  */
 module.exports.read = function(info, callback) {
-    if (!info.manga.source || info.manga.source.match(/readmanga|shikimori/)) {
+    /*if (!info.manga.source || info.manga.source.match(/readmanga|shikimori/)) {
         readReadmanga(info, callback);
         return;
-    }
+    }*/
 
     let type = info.manga.type || 'manga';
-    let sources = Plugin.getAllSources();
+    let sources = Plugins.getAllSources();
     if (sources[type]) {
         let filter = sources[type].find(itm => itm.opt.source === info.manga.source);
 
@@ -127,42 +118,6 @@ module.exports.read = function(info, callback) {
     }
 }
 
-function searchShikimoriAnime(query, callback) {
-    shikimori.client.get('animes', { search: query, limit: 10 }, function(err, response, body) {
-        if (err) log.error(err);
-        
-        response = response.map(itm => {
-            itm.source = 'shikimori.org';
-            itm.type = 'anime';
-            return itm;
-        })
-
-        callback(response);
-    })
-}
-function searchShikimoriManga(query, callback) {
-    shikimori.client.get('mangas', { search: query, limit: 10 }, function(err, response, body) {
-        if (err) log.error(err);
-        
-        response = response.map(itm => {
-            itm.source = 'shikimori.org';
-            itm.type = 'manga';
-            return itm;
-        })
-
-        callback(response);
-    })
-}
-
-function watchShikimori(info, callback) {
-    shikiOnline.getPlayers(info.anime.id, info.watch.ep, info.watch.video_id, function(vids) {
-        if (typeof vids === 'number') {
-            callback(null, { msg: 'Not found', code: 404 });
-        } else {
-            callback(vids);
-        }
-    })
-}
 function readReadmanga(info, callback) {
     if (info.action === 'chapter') {
         readManga.getChapter(info.link, callback)

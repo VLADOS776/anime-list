@@ -5,6 +5,8 @@ const request = require('request'),
 let videoDOM = null,
     domain = null;
 
+// TODO: Файл не используется. Можно вытащить отсюда полезные функции и удалить
+
 module.exports.getPlayers = function(animeId, ep, videoId, callback) {
     if (typeof videoId === 'function') {
         callback = videoId;
