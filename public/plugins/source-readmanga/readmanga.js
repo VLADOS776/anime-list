@@ -136,13 +136,16 @@ module.exports = function(Plugin) {
         },
         read: (opt, callback) => {
             let url;
-            if (opt.link) {
-                url = opt.link
+            if (opt.read.url) {
+                url = baseUrl + opt.read.url;
             } else if (opt.read.volume === 1 && opt.read.chapter === 1) {
                 url = opt.manga.startReadLink;
-            } else {
+            } else if (allChapters && allChapters.length) {
                 url = baseUrl + allChapters[allChapters.length - opt.read.chapterIndex - 1].url
+            } else {
+                return callback('Link not found');
             }
+
             url = cpLink(url);
 
             request.get({ url: url, headers: requestHeaders }, function(err, response, body) {
@@ -206,8 +209,15 @@ module.exports = function(Plugin) {
                     let val = $(this).attr('value');
                     let name = $(this).text();
 
-                    let volume = parseInt(val.match(/vol(\d+)\//)[1])
-                    let chapter = parseInt(val.match(/vol\d+\/(\d+)/)[1])
+                    let volume,
+                        chapter;
+
+                    try {
+                        volume = val.match(/vol(\d+)\//)[1]
+                        chapter = val.match(/vol\d+\/(.*?\d+)\??/)[1]
+                    } catch (e) {
+                        console.error(e);
+                    }
 
                     returnObj.chapters.push({
                         volume: volume,
