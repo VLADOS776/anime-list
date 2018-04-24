@@ -8,6 +8,7 @@ module.exports = {
     supportedFormats: ['vtt', 'ass', 'srt'],
     subFolderRegEx: /^(?:sub(?:titles)?|суб(?:титры)?)/i,
     episodeRegEx: /[-._ \[]+(?:(?:ep?[ .]?)?(\d{1,3})(?:[_ ]?v\d+)?)+/i,
+    
     /**
      * Ищет в папке субтитры к эпизоду
      * @param {Object} opt - Параметры

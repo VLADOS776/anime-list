@@ -100,13 +100,10 @@ module.exports = {
         })
     },
     
-    /*
-        Получить список ссылок на изображения для главы
-        url - ссылка вида 'readmanga.me/manga_name/vol5/3?mtr=1'
-        Ссылку на первую главу брать из mangaInfo.startReadLink
-    */
     /**
      * Получить список ссылок на изображения для главы
+     * Ссылку на первую главу брать из mangaInfo.startReadLink
+     * 
      * @param {string} url - Ссылка вида 'readmanga.me/manga_name/vol5/3?mtr=1'
      * @param {function} callback - Callback
      */

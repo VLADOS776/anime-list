@@ -1,4 +1,8 @@
 node_modules/
 dist/
-public/.sass-cache/
 .sass-cache/
+
+public/.sass-cache/
+public/components
+public/pages
+public/App.js
