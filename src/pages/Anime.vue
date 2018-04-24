@@ -6,19 +6,19 @@
             </div>
             <div class="right-side d-flex flex-column justify-content-around">
                 <div class="studios">
-                    <img v-for="studio in anime.studios" :src="studio.img || 'https://shikimori.org/' + studio.image" alt:="studio.name" class='studio mb-1'>
+                    <img v-for="studio in anime.studios" :src="studio.img || 'https://shikimori.org/' + studio.image" :alt="studio.name" class='studio mb-1' :key="studio.name">
                 </div>
                 <div>
                     <h5>{{ anime.russian }} <small class='text-muted'>{{ anime.year }}</small></h5>
                     <h6 v-if="anime.name">{{ anime.name }}</h6>
                     <ul v-if='anime.altNames' class='altNames'>
                         <template v-for='(name, index) in anime.altNames'>
-                            <li v-if='index == 2' class='altNames__showMore btn btn-outline-secondary btn-sm' @click="showMoreAltNames">...</li>
-                            <li class='altNames__name' :class='{"d-none": index > 1}'>{{name}}</li>
+                            <li v-if='index == 2' class='altNames__showMore btn btn-outline-secondary btn-sm' @click="showMoreAltNames" :key="index">...</li>
+                            <li class='altNames__name' :class='{"d-none": index > 1}' :key="name">{{name}}</li>
                         </template>
                     </ul>
                     <div>
-                        <span class="genre" v-for='genre in anime.genres'>{{ typeof genre === 'string' ? genre : genre.russian }}</span>
+                        <span class="genre" v-for='genre in anime.genres' :key="typeof genre === 'string' ? genre : genre.russian">{{ typeof genre === 'string' ? genre : genre.russian }}</span>
                     </div>
                 </div>
                 <div>

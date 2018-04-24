@@ -4,7 +4,7 @@
             <button class="btn btn-outline-secondary btn-sm" @click="back"><i class="fa fa-arrow-left" aria-hidden="true"></i> Назад</button>
             <div v-if="chapters && chapters.length" class="select-chapter--wrap">
                 <select class="form-control select-chapter" v-model="chapterIndex">
-                    <option v-for="(cp, index) in chapters" :value="chapters.length - index - 1" :key="cp.chapter">{{cp.name}}</option>
+                    <option v-for="(cp, index) in chapters" :value="chapters.length - index - 1">{{cp.name}}</option>
                 </select>
             </div>
             <button class='btn btn-sm' :class="bookmarkClass" @click='bookmark'><i class="fa fa-bookmark" aria-hidden="true"></i> Добавить закладку</button>
@@ -40,7 +40,7 @@
             <div class="select-wrap">
                 Страница
                 <select class="form-control select-page" v-model="currentPage">
-                    <option v-for="pageNum in totalPages" :value="pageNum" :key="pageNum">{{pageNum}}</option>
+                    <option v-for="pageNum in totalPages" :value="pageNum" :key="'page'+pageNum">{{pageNum}}</option>
                 </select>
                 из {{totalPages}}
             </div>
@@ -136,13 +136,8 @@ module.exports = {
             this.$emit('change_page', 'manga')
         },
         bookmark: function(event) {
-            let bookmark = {
-                volume: this.watch.volume,
-                chapter: this.watch.chapter,
-                page: this.currentPage,
-                chapterIndex: this.chapterIndex,
-                chapterUrl: this.chapterUrl
-            }
+            let bookmark = Object.assign({}, this.chapter);
+            bookmark.page = this.currentPage;
             
             if (!this.manga.inDB) {
                 db.manga.add(JSON.parse(JSON.stringify(this.manga)), () => {
@@ -218,9 +213,9 @@ module.exports = {
                 this.loadChapter(this.prevChapterLink);
             }*/
         },
-        loadChapter: function(url) {
+        loadChapter: function(isBookmark) {
             this.loading = true;
-            Sources.read({
+            let sourceParam = {
                 manga: this.manga,
                 read: {
                     volume: this.watch.volume,
@@ -228,9 +223,14 @@ module.exports = {
                     page: this.currentPage,
                     chapterIndex: this.chapterIndex
                 },
-                link: url,
                 action: 'chapter'
-            }, (err, info) => {
+            };
+            if (isBookmark) {
+                sourceParam.read = this.manga.bookmark;
+                sourceParam.bookmark = true;
+            }
+
+            Sources.read(sourceParam, (err, info) => {
                 this.loading = false;
                 if (err == null) {
                     this.currentImg = info.image;
@@ -298,7 +298,7 @@ module.exports = {
     created: function() {
         this.loading = true;
         if (this.manga.bookmark) {
-            this.loadChapter(this.manga.bookmark.chapterUrl);
+            this.loadChapter(true);
             this.watch.bookmarkPage = this.manga.bookmark.page;
             
             onlineManga.getInfo(this.manga.bookmark.chapterUrl, (err, manga) => {

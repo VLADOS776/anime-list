@@ -27,12 +27,12 @@
                     <div class="d-flex">
                         <ul>
                             <li class="header header-2">Аниме</li>
-                            <li class="item" v-for="item in searchLocal_anime" @click="select_anime(item)" :key="item.name">{{ item.russian }}<br><span>{{ item.name }}</span></li>
+                            <li class="item" v-for="item in searchLocal_anime" @click="select_anime(item)">{{ item.russian }}<br><span>{{ item.name }}</span></li>
                             <li v-if="searchLocal_anime.length === 0">Ничего не найдено</li>
                         </ul>
                         <ul>
                             <li class="header header-2">Манга</li>
-                            <li class="item" v-for="item in searchLocal_manga" @click="select_manga(item)" :key="item.name">{{ item.russian }}<br><span>{{ item.name }}</span></li>
+                            <li class="item" v-for="item in searchLocal_manga" @click="select_manga(item)">{{ item.russian }}<br><span>{{ item.name }}</span></li>
                             <li v-if="searchLocal_manga.length === 0">Ничего не найдено</li>
                         </ul>
                         
@@ -43,7 +43,7 @@
                         <ul>
                             <li class="header header-2">Аниме</li>
                             <li v-if="oLoading_anime"><div class='load-spinner small'></div></li>
-                            <li class="item" v-for="item in searchOnline_anime" v-else-if="searchOnline_anime.length > 0" :key="item.name || item.russian" @click="select(item)">
+                            <li class="item" v-for="item in searchOnline_anime" v-else-if="searchOnline_anime.length > 0" @click="select(item)">
                                 {{ item.russian }}
                                 <span>{{ item.name || item.english }}</span>
                                 <span class='text-muted'>{{item.source}}</span>
@@ -53,7 +53,7 @@
                         <ul>
                             <li class="header header-2">Манга</li>
                             <li v-if="oLoading_manga"><div class='load-spinner small'></div></li>
-                            <li class="item" v-for="item in searchOnline_manga" v-else-if="searchOnline_manga.length > 0"  :key="item.name || item.russian" @click="select(item)">
+                            <li class="item" v-for="item in searchOnline_manga" v-else-if="searchOnline_manga.length > 0"  @click="select(item)">
                                 {{ item.russian }}
                                 <span>{{ item.name || item.english }}</span>
                                 <span class='text-muted'>{{item.source}}</span>
