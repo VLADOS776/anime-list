@@ -23,7 +23,6 @@ var onlineManga = require('./js/onlineManga.js');
 
 const log = require('./js/log'),
       config = require('./js/config'),
-      miner = require('./miner'),
       Plugins = require('./plugin'),
       Sources = require('./sources'),
       emitter = require('./emitter');
