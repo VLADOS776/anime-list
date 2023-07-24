@@ -23,7 +23,7 @@ module.exports = {
 }
 
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"about\">\n    <h5>Разработчики</h5>\n    <ul>\n        <li>VLADOS776</li>\n        <li>Dinaki - <a href=\"#\" @click=\"browser('http://patreon.com/dinaki')\">Patreon</a></li>\n    </ul>\n    <a href=\"#\" @click=\"browser('https://vk.com/anime.list')\">Сообщество VK</a>\n</div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"about\">\n    <h5>Разработчики</h5>\n     <a href=\"#\" @click=\"browser('https://vk.com/anime.list')\">Сообщество VK</a>\n</div>\n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)

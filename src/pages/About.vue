@@ -1,10 +1,6 @@
 <template>
     <div class="about">
         <h5>Разработчики</h5>
-        <ul>
-            <li>VLADOS776</li>
-            <li>Dinaki - <a href="#" @click="browser('http://patreon.com/dinaki')">Patreon</a></li>
-        </ul>
         <a href="#" @click="browser('https://vk.com/anime.list')">Сообщество VK</a>
     </div>
 </template>

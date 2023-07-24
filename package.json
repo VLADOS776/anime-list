@@ -4,8 +4,7 @@
   "main": "index.js",
   "description": "Программа для просмотра аниме и чтения манги.",
   "author": {
-    "name": "VLADOS776",
-    "email": "kurtukovvlad@gmail.com"
+    "name": "VLADOS776"
   },
   "homepage": "http://anime-list.clan.su/",
   "scripts": {
